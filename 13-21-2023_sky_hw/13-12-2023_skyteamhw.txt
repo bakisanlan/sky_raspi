@@ -1,0 +1,41 @@
+ING COMMENT
+
++++++KOD 
+
+
+NED_to_lat_lon >>>> dairesel dünya kabulu
+NED_to_lat_lon >>>> eliptik dünya 
+ismini ned2lla
+MATLAB da test etceksiniz
+
+camera_class
+video kaydetsin
+yapay zeka ile objeyi detect etsin
+canlı olarak göstersin/göstermesin
+objenin px ve py noktaları dönsün
+
+falling_algo
+comment eklenicek
+
+obj_NED_rel_home
+camera frame to world frame anlaşılsın
+internetteki gibi bir fonksiyon yazın
+https://automaticaddison.com/how-to-convert-camera-pixels-to-robot-base-frame-coordinates/
+
+lla2ned
+MATLAB kullanarak doğrulayın
+lla2ned , ellipsoid method
+
+get_bearing
+bearing nedir
+https://www.mathworks.com/matlabcentral/fileexchange/72705-bearing
+matlab fonksiyonu ile karşılaştırın
+
+github repoları araştırılcak
+kamera ile obje tanıma ve yönelme
+
++++++GAZEBO
+
+kamera aşşağıya baktırın
+resim olarak ateş görseli ekleyin
+
