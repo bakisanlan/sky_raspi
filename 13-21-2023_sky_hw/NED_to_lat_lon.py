@@ -1,28 +1,46 @@
-from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal, Command
-import time 
-import math
-from pymavlink import mavutil
-import dronekit
-import geopy.distance
-from gpiozero import Servo
-import gpiozero
-from time import sleep
-import cv2      
-import schedule
-from ServoControl import ServoControl
-from camera_class import camera_class
-#from get_wp_cmd import get_wp_cmd
-import datetime
-import numpy as np
 
-def NED_to_lat_lon(ref_location, north, east):
-    # convert north and east values to latitude and longitude offsets
-    earth_radius = 6378137  # radius of the earth in meters
-    lat_offset = north / earth_radius * (180 / math.pi)
-    lon_offset = east / earth_radius * (180 / math.pi) / math.cos(ref_location.lat * math.pi / 180)
+# from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal, Command
+# import time 
+# import math
+# from pymavlink import mavutil
+# import dronekit
+# import geopy.distance
+# from gpiozero import Servo
+# import gpiozero
+# from time import sleep
+# import cv2      
+# import schedule
+# from ServoControl import ServoControl
+# from camera_class import camera_class
+# #from get_wp_cmd import get_wp_cmd
+# import datetime
+# import numpy as np
+import navpy
 
-    # calculate new latitude and longitude
-    obj_lat = ref_location.lat + lat_offset
-    obj_lon = ref_location.lon + lon_offset
+def ned_to_lla(ned_coordinates, reference_lla):
+    """
+    Convert NED (North-East-Down) coordinates to LLA (Latitude-Longitude-Altitude) using navpy library.
 
-    return (obj_lat,obj_lon)    
+    Parameters:
+    - ned_coordinates: Tuple (north, east, down) representing NED coordinates.
+    - reference_lla: Tuple (latitude, longitude, altitude) representing the reference point.
+
+    Returns:
+    Tuple (latitude, longitude, altitude) representing the converted LLA coordinates.
+    """
+    # Extract reference LLA coordinates
+    lat_ref, lon_ref, alt_ref = reference_lla
+
+    # Convert NED to LLA
+    lla_coordinates = navpy.ned2lla(ned_coordinates, lat_ref, lon_ref, alt_ref, latlon_unit='deg', alt_unit='m', model='wgs84')
+
+    return lla_coordinates
+
+
+
+# Example usage:
+ned_coordinates = (10000, 20000, -50)  # NED coordinates
+reference_lla = (37.7749, -122.4194, 0)  # Reference LLA coordinates (San Francisco, CA)
+
+lla_coordinates = ned_to_lla(ned_coordinates, reference_lla)
+print("Converted LLA coordinates:", lla_coordinates)
