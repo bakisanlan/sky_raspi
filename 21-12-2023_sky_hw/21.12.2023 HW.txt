@@ -1,0 +1,15 @@
+21.12.2023 HW
+
+hazır lla2ned mı daha hızlı yoksa manuel mi?
+hazır ned2lla mı daha hızlı yoksa manuel mi?
+python da hız testi yapın
+
+camera frame to world frame python kodu
+
+camera_position_ned_rel_home, >>>  z bileşeni - yönlü çünkü ... 
+
+videostream.start_recording('output_{}.mp4'.format(videostream.video_counter), 30, (imW, imH)) inite girebiliyor mu
+stream >>> video
+ödevin videosunu koyar mısın pls
+
+yaw sıkıntı
