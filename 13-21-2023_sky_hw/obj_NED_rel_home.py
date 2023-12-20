@@ -1,65 +1,36 @@
 import math
 import numpy as np
-from dronekit import  connect, VehicleMode, LocationGlobalRelative,Command
-import time
-from pymavlink import mavutil
-import geopy.distance
-import cv2
-from geodetic_to_NED import geodetic_to_NED
 
-def obj_NED_rel_home(euler_ang,obj_px_pos,camera_pos_ned_rel_home):
+def rotation_matrix(roll, pitch, yaw):
+    roll = math.radians(roll)
+    pitch = math.radians(pitch)
+    yaw = math.radians(yaw)
 
-    roll = euler_ang[0]      # effect y axis(pitch) negative
-    pitch = euler_ang[1] + 27          # effect x axis(roll)  pozitive
-    yaw = euler_ang[2]           # effect both x and y axis positive
-
-    # Define the camera's Euler angles
-    roll = math.radians(roll)  # radians
-    pitch = math.radians(pitch)  # radians
-    yaw = math.radians(yaw)  # radians
-
-    # Define the camera's intrinsic parameters
-    #camera_matrix = np.array([[0.0616, 0, 0],    #for 640,480px 
-    #                        [0, 0.0616, 0],
-    #                        [0, 0, 1]])
-    
-    f = 620
-
-    # Define the camera's extrinsic parameters
-    # Calculate the rotation matrix that transforms camera coordinates to world coordinates
     Rx = np.array([[1, 0, 0], [0, np.cos(roll), np.sin(roll)], [0, -np.sin(roll), np.cos(roll)]])
     Ry = np.array([[np.cos(pitch), 0, -np.sin(pitch)], [0, 1, 0], [np.sin(pitch), 0, np.cos(pitch)]])
     Rz = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
-    R = np.dot(np.dot(Rx, Ry), Rz)
 
-    # Define the image coordinates of the object
-    image_coords = np.array([obj_px_pos[0], obj_px_pos[1], 1])  # pixels
-    x = -obj_px_pos[0]
-    y = -obj_px_pos[1]
+    return np.dot(np.dot(Rx, Ry), Rz)
 
+def object_coordinates(euler_angles, pixel_position, camera_position_ned_rel_home, focal_length=620):
+    roll, pitch, yaw = euler_angles
+    x, y = -pixel_position[0], -pixel_position[1]
 
-    # Calculate the object's position in the camera frame
-    #object_coords_camera = np.transpose(camera_matrix).dot(image_coords)
+    R = rotation_matrix(roll, pitch + 27, yaw)
 
-    # Transform the object coordinates to world coordinates
-    #
-    # object_coords_world = np.dot(np.transpose(R), object_coords_camera - camera_pos)
+    north = (-camera_position_ned_rel_home[2]) * (R[0][0] * x + R[1][0] * y - focal_length * R[2][0]) / \
+        (R[0][2] * x + R[1][2] * y - focal_length * R[2][2]) + camera_position_ned_rel_home[0]
 
-    # Calculate the distance to the object
-    #distance = np.linalg.norm(object_coords_world)
+    east = (-camera_position_ned_rel_home[2]) * (R[0][1] * x + R[1][1] * y - focal_length * R[2][1]) / \
+        (R[0][2] * x + R[1][2] * y - focal_length * R[2][2]) + camera_position_ned_rel_home[1]
 
-    X = (-camera_pos_ned_rel_home[2]) * (R[0][0]* x + R[1][0] * y - f * R[2][0]) / (R[0][2]* x + R[1][2] * y - f * R[2][2]) + camera_pos_ned_rel_home[0]
-    Y = (-camera_pos_ned_rel_home[2]) * (R[0][1]* x + R[1][1] * y - f * R[2][1]) / (R[0][2]* x + R[1][2] * y - f * R[2][2]) + camera_pos_ned_rel_home[1]
+    return north, east, 0
 
+# Örnek kullanım:
+euler_angles = [10, 20, 30]  # Örnek Euler açıları (roll, pitch, yaw)
+pixel_position = [100, 50]   # Örnek piksel konumu (x, y)
+camera_position_ned_rel_home = [0, 0, 50]  # Örnek kamera konumu (NED koordinatları)
 
-    # print("Object coordinates in camera frame: ({:.2f}, {:.2f}, {:.2f}) meters".format(object_coords_camera[0],
-    #                                                                                     object_coords_camera[1],
-    #                                                                                     object_coords_camera[2]))
-    # print("Object coordinates in world frame: ({:.2f}, {:.2f}, {:.2f}) meters".format(object_coords_world[0],
-    #                                                                                     object_coords_world[1],
-    #                                                                                     object_coords_world[2]))
-    # print("Distance to object: {:.2f} meters".format(distance))
+result = object_coordinates(euler_angles, pixel_position, camera_position_ned_rel_home)
 
-    return (X,Y,0)
-
-#print(find_object_offset((0,20,0),(0,0),(0,0,50),0))
+print("Object Coordinates:", result)
