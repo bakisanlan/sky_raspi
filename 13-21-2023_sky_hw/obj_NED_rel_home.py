@@ -2,7 +2,7 @@
 # body frame of UAV, local NED frame of UAV and inertial NED frame
 
 # Aim is that function is finding relative position of object,that 
-# is detected in image frame, w.r.t UAV in inertial NED frame.
+# is detected in image frame, w.r.t UAV in local NED frame.
 
 # For making that frame conversion we have to do it with step by step.
 # Rotation and translation steps are --> 
@@ -24,7 +24,7 @@
 
 # Image Frame = [Xp; Yp; focal length] --> Image Frame is a 2D frame that
 # is translated by amount of focal length distance from Camera Frame origin pos.
-# X and Y direction is same with Camera Frame. Due to Image Frame is 2D Z position
+# X and Y direction is same with Camera Frame. Due to Image Frame is 2D, Z position
 # is constant as focal length.
 
 # Body Frame = [Xb; Yb; Zb] --> Origin point of that frame is cg of UAV.
@@ -62,7 +62,6 @@ def rotation_matrix(roll, pitch, yaw):
 
 def object_coordinates(euler_angles, pixel_position, cam_pos_ned_inertia, focal_length=620):
     
-    
     roll, pitch, yaw = euler_angles
     
     Xp, Yp = pixel_position[0], pixel_position[1] 
@@ -88,23 +87,23 @@ def object_coordinates(euler_angles, pixel_position, cam_pos_ned_inertia, focal_
     Zb = Zc
     obj_pos_bodyF = np.array([[Xb], [Yb], [Zb]])
  
-    # Rotation matrix for Local NED Frame to Body Frame
+    # Rotation matrix from Local NED Frame to Body Frame
     R_lned2b = rotation_matrix(roll, pitch, yaw)
     
-    # Rotation matrix for Body Frame to Local NED Frame
+    # Rotation matrix from Body Frame to Local NED Frame
     R_b2lned = np.linalg.inv(R_lned2b)
     
-    # Rotation and Translation of Body Frame to Local NED Frame
-    # cam_pos_ned_inertia = np.array([cam_pos_ned_inertia[0], [cam_pos_ned_inertia[1]],[cam_pos_ned_inertia[2]]])
-    obj_pos_localnedF = np.dot(R_b2lned, obj_pos_bodyF) #+ np.transpose(np.reshape(np.array(camera_position_ned_rel_home),(1,3)))
+    # Rotation from Body Frame to Local NED Frame
+    obj_pos_localnedF = np.dot(R_b2lned, obj_pos_bodyF)
     
+    # Return (N, E) relative to cg of UAV
     return (obj_pos_localnedF[0][0],obj_pos_localnedF[1][0])
 
-# Örnek kullanım:
-euler_angles = [0, 0, 90]  # Örnek Euler açıları (roll, pitch, yaw)
-pixel_position = [200, 100]   # Örnek piksel konumu (x, y)
-camera_position_ned_rel_home = [0, 0, -50]  # Örnek kamera konumu (NED koordinatları)
+# Example of use
+euler_angles = [0, 0, 90]  # Euler Angles of UAV
+pixel_position = [200, 100]   # Pixel position of object in image frame
+cam_pos_ned_inertia = [0, 0, -50]  # Camera position in Inertia NED frame
 
-result = object_coordinates(euler_angles, pixel_position, camera_position_ned_rel_home)
+result = object_coordinates(euler_angles, pixel_position, cam_pos_ned_inertia)
 
 print("Object Coordinates Rel To UAV in (North-East)", result)
