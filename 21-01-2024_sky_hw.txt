@@ -1,0 +1,19 @@
+1) Gazebo ateş ekleme
+
+
+2) Gazebo teknofest görev implementation
+
+1. Servo ile ilgili şeyler kalkacak
+2. Hüseyinin yazdığı kamera classı kullanılcak
+3. Mesafe sorgulayan simple goto ile gidin
+4. Ardupilot sitl location bursa yunuseline döndürülcek
+5. Kalkıştan inişe kadar, video record. Bounding box lı hali record etsin
+6. İçteki #####FUCTIONS THAT WILL HANDLE LATERRR ####, Utily classından çağırılcak
+7. Obje pixel kordinatının vehicle frame geçişini yeni fonksiyon ile yazın
+8. get_obj_mean_lat_lon içindeki 'if len(list_obj_lat_lon)' hatasını düzeltin
+9. get_obj_mean_lat_lon içindeki else kısmındaki algoritmayı test edin.
+10. İlk tahmin edilen yerde objeyi görmezse, auto missiona mantıklı şekilde dön
+11. Kendi 4 noktalı seneryomuza göre 269. ve 305. satırdaki kodları değiştirin
+12. if (dist_from_drop_point <= 0 olarak değişin)
+
+ 
