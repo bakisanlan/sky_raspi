@@ -68,8 +68,7 @@ camera_bot = camera_class(video,fourcc,out)
 
 
 print("Trying to connect to the vehicle...")
-# vehicle = connect('/dev/ttyACM0', baud=57600, wait_ready=True)
-vehicle = connect("127.0.0.1:14550", wait_ready=True)
+vehicle = connect('/dev/ttyACM0', baud=57600, wait_ready=True)
 print("Connected to the vehicle.")
 
 cmds=vehicle.commands
@@ -138,7 +137,7 @@ def get_obj_mean_lat_lon(detected_obj_px):
                     detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)
                     time_start = time.time()    
             break
-        if len(list_obj_lat_lon):
+        if len(list_obj_lat_lon) == 1:
             return (list_obj_lat_lon[0][0],list_obj_lat_lon[0][1])   
         else:
             lat_values = [lat for lat, lon in list_obj_lat_lon]
