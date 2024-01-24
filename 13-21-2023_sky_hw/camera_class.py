@@ -9,13 +9,13 @@ class camera_class():
     """Camera object that controls video streaming from the Picamera"""
     def __init__(self, resolution=(640, 480), framerate=30, record_video=False):
         # Initialize the PiCamera and the camera image stream
-        self.stream = cv2.VideoCapture(0)
-        ret = self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-        ret = self.stream.set(3, resolution[0])
-        ret = self.stream.set(4, resolution[1])
+        self.video = cv2.VideoCapture(0)
+        ret = self.video.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        ret = self.video.set(3, resolution[0])
+        ret = self.video.set(4, resolution[1])
 
         # Read the first frame from the stream
-        (self.grabbed, self.frame) = self.stream.read()
+        (self.grabbed, self.frame) = self.video.read()
 
         # Variable to control when the camera is stopped
         self.stopped = False
@@ -28,6 +28,9 @@ class camera_class():
         self.video_duration = 30
         self.video_counter = 1
 
+        if self.record_video:
+            self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (imW, imH))
+
     def start(self):
         # Start the thread that reads frames from the video stream
         Thread(target=self.update, args=()).start()
@@ -39,13 +42,13 @@ class camera_class():
             # If the camera is stopped, stop the thread
             if self.stopped:
                 # Close camera resources
-                self.stream.release()
+                self.video.release()
                 if self.record_video:
                     self.stop_recording()
                 return
 
             # Otherwise, grab the next frame from the stream
-            (self.grabbed, self.frame) = self.stream.read()
+            (self.grabbed, self.frame) = self.video.read()
 
             # Record video if enabled
             if self.record_video and self.recording:
@@ -78,7 +81,7 @@ class camera_class():
         # Set the flag to stop the thread
         self.stopped = True
         # Release the video stream
-        self.stream.release()
+        self.video.release()
         # Release the VideoWriter
         self.stop_recording()
 
@@ -191,7 +194,6 @@ freq = cv2.getTickFrequency()
 
 # Initialize video stream
 videostream = camera_class(resolution=(imW, imH), framerate=30, record_video=True).start()
-videostream.start_recording('output_{}.mp4'.format(videostream.video_counter), 30, (imW, imH))
 time.sleep(1)
 
 while True:
