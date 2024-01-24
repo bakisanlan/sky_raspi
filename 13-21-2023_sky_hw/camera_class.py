@@ -84,46 +84,31 @@ class camera_class():
         self.video.release()
         # Release the VideoWriter
         self.stop_recording()
-
-    def detect_objects_with_coordinates(self, frame, boxes, classes, scores, labels, imW, imH):
-        detected_objects = []
-
+    
+    def detect_x_y(self, frame, boxes, scores, imW, imH):
+        center_x = 0  # Initialize center_x outside the loop
+        center_y = 0  # Initialize center_y outside the loop
         for i in range(len(scores)):
             if 0.3 < scores[i] <= 1.0:
-                ymin = int(max(1, (boxes[i][0] * imH)))
                 xmin = int(max(1, (boxes[i][1] * imW)))
-                ymax = int(min(imH, (boxes[i][2] * imH)))
+                ymin = int(max(1, (boxes[i][0] * imH)))
                 xmax = int(min(imW, (boxes[i][3] * imW)))
+                ymax = int(min(imH, (boxes[i][2] * imH)))
 
                 center_x = int((xmin + xmax) / 2)
                 center_y = int((ymin + ymax) / 2)
 
-                object_name = labels[int(classes[i])]
-                confidence = int(scores[i] * 100)
-
-                detected_objects.append({
-                    'object_name': object_name,
-                    'confidence': confidence,
-                    'center_x': center_x,
-                    'center_y': center_y
-                })
-
                 # Draw bounding box
                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
-
-                # Draw label
-                label = f'{object_name}: {confidence}%'
-                labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
-                label_ymin = max(ymin, labelSize[1] + 10)
-                cv2.rectangle(frame, (xmin, label_ymin - labelSize[1] - 10), (xmin + labelSize[0], label_ymin + baseLine - 10),
-                            (255, 255, 255), cv2.FILLED)
-                cv2.putText(frame, label, (xmin, label_ymin - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
 
                 # Draw object coordinates
                 coordinates_text = f'X: {center_x}, Y: {center_y}'
                 cv2.putText(frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                
+        # Return the last detected coordinates as a tuple
+        return (center_x, center_y)
 
-        return detected_objects
+
 
 
 # Define and set input arguments
@@ -219,19 +204,11 @@ while True:
 
     # Retrieve detection results
     boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0]  # Bounding box coordinates of detected objects
-    classes = interpreter.get_tensor(output_details[classes_idx]['index'])[0]  # Class index of detected objects
     scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0]  # Confidence of detected objects
 
-    # Call the function to detect objects and get their coordinates
-    detected_objects = videostream.detect_objects_with_coordinates(frame, boxes, classes, scores, labels, imW, imH)
-    for obj in detected_objects:
-        object_name = obj['object_name']
-        confidence = obj['confidence']
-        center_x = obj['center_x']
-        center_y = obj['center_y']
-
-        # Use the extracted values as needed
-        print(f"{object_name} at ({center_x}, {center_y}) with confidence {confidence}%")
+    # # # Call the function to detect objects and get their coordinates
+    detected_objects = videostream.detect_x_y(frame, boxes, scores, imW, imH)
+    print(detected_objects)
 
 
     # Draw framerate in the corner of the frame
