@@ -321,7 +321,7 @@ while True: #5
                                                         bearing_to_wp = get_bearing(vehicle.location.global_frame,final_obj_mean_lat_lon)
                                                         print_now()
                                                         print('Dist from droppoint is: {}, Bearing: {}'.format(dist_from_drop_point,bearing_to_wp))
-                                                        if (dist_from_drop_point < back_servo_time*vehicle.groundspeed) and (abs(bearing_to_wp - math.degrees(vehicle.attitude.yaw)) < 10):
+                                                        if (dist_from_drop_point <= 0) and (abs(bearing_to_wp - math.degrees(vehicle.attitude.yaw)) < 10):
                                                             
                                                             if not isBack_bombed:
                                                                 ServoControlBot.DropBackBomb()
