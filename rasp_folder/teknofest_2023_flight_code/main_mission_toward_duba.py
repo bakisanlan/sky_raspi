@@ -68,7 +68,8 @@ camera_bot = camera_class(video,fourcc,out)
 
 
 print("Trying to connect to the vehicle...")
-vehicle = connect('/dev/ttyACM0', baud=57600, wait_ready=True)
+# vehicle = connect('/dev/ttyACM0', baud=57600, wait_ready=True)
+vehicle = connect("127.0.0.1:14550", wait_ready=True)
 print("Connected to the vehicle.")
 
 cmds=vehicle.commands
