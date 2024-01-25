@@ -12,7 +12,7 @@
 7. Obje pixel kordinatının vehicle frame geçişini yeni fonksiyon ile yazın
 8. get_obj_mean_lat_lon içindeki 'if len(list_obj_lat_lon)' hatasını düzeltin
 9. get_obj_mean_lat_lon içindeki else kısmındaki algoritmayı test edin.
-10. İlk tahmin edilen yerde objeyi görmezse, auto missiona mantıklı şekilde dön
+10. İlk tahmin edilen yerde objeyi görmezse, auto missiona mantıklı şekilde dön(simdilik pas gecin)
 11. Kendi 4 noktalı seneryomuza göre 269. ve 305. satırdaki kodları değiştirin
 12. if (dist_from_drop_point <= 0 olarak değişin)
 
