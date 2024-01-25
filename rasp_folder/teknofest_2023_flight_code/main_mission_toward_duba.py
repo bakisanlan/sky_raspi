@@ -137,7 +137,7 @@ def get_obj_mean_lat_lon(detected_obj_px):
                     detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)
                     time_start = time.time()    
             break
-        if len(list_obj_lat_lon) == 1:
+        if len(list_obj_lat_lon):
             return (list_obj_lat_lon[0][0],list_obj_lat_lon[0][1])   
         else:
             lat_values = [lat for lat, lon in list_obj_lat_lon]
@@ -321,7 +321,7 @@ while True: #5
                                                         bearing_to_wp = get_bearing(vehicle.location.global_frame,final_obj_mean_lat_lon)
                                                         print_now()
                                                         print('Dist from droppoint is: {}, Bearing: {}'.format(dist_from_drop_point,bearing_to_wp))
-                                                        if (dist_from_drop_point <= 0) and (abs(bearing_to_wp - math.degrees(vehicle.attitude.yaw)) < 10):
+                                                        if (dist_from_drop_point <= back_servo_time*vehicle.groundspeed) and (abs(bearing_to_wp - math.degrees(vehicle.attitude.yaw)) < 10):
                                                             
                                                             if not isBack_bombed:
                                                                 ServoControlBot.DropBackBomb()
