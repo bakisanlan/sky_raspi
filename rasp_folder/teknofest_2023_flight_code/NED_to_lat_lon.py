@@ -4,12 +4,12 @@ import math
 from pymavlink import mavutil
 import dronekit
 import geopy.distance
-from gpiozero import Servo
-import gpiozero
+# from gpiozero import Servo
+# import gpiozero
 from time import sleep
 import cv2      
 import schedule
-from ServoControl import ServoControl
+# from ServoControl import ServoControl
 from camera_class import camera_class
 #from get_wp_cmd import get_wp_cmd
 import datetime
