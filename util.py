@@ -13,9 +13,9 @@ from dronekit import connect
 
 
 class Utility:
-    def __init__(self):
+    def __init__(self,vehicle):
         # Connect to the vehicle
-        self.vehicle = connect('/dev/ttyACM0', baud=57600, wait_ready=True)  # Example connection string, adjust as needed
+        self.vehicle = vehicle
         
         # Set home location
         self.home_location = self.vehicle.location.global_frame
@@ -141,7 +141,7 @@ class Utility:
                 filtered_obj_lon_mean = np.mean(filtered_lon_values)
                 return (filtered_obj_lat_mean, filtered_obj_lon_mean)
 
-    def get_obj_mean_lat_lon_wp(self, detected_obj_px):
+    def get_obj_mean_lat_lon_wp(self, detected_obj_px,obj_mean_lat_lon):
             #list_detected_obj_px = [detected_obj_px]
             list_obj_lat_lon = [self.obj_px_to_obj_lat_lon(detected_obj_px)]
             while True:
@@ -149,7 +149,7 @@ class Utility:
                 while (time.time() - time_start) < 0.2:
                     detected_obj_px = self.camera_bot.detect_x_y(self.boxes, self.scores, self.imW, self.imH)
                     while (detected_obj_px != None):
-                        obj_mean_lat_lon = self.get_obj_mean_lat_lon(detected_obj_px)   # added 
+                        #obj_mean_lat_lon = self.get_obj_mean_lat_lon(detected_obj_px)   # added 
                         dist_vehicle_obj = self.distance_fun(obj_mean_lat_lon,self.vehicle.location.global_frame)
                         if dist_vehicle_obj > 10:
                             list_obj_lat_lon.append(self.obj_px_to_obj_lat_lon(detected_obj_px))
