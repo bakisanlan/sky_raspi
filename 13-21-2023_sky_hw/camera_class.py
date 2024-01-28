@@ -84,8 +84,9 @@ class camera_class():
         self.video.release()
         # Release the VideoWriter
         self.stop_recording()
-    
-    def detect_x_y(self, frame, boxes, scores, imW, imH):
+
+
+    def detect_x_y(self, boxes, scores, imW, imH):
         center_x = 0  # Initialize center_x outside the loop
         center_y = 0  # Initialize center_y outside the loop
         for i in range(len(scores)):
@@ -99,24 +100,23 @@ class camera_class():
                 center_y = int((ymin + ymax) / 2)
 
                 # Draw bounding box
-                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
+                cv2.rectangle(self.frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
 
                 # Draw object coordinates
                 coordinates_text = f'X: {center_x}, Y: {center_y}'
-                cv2.putText(frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.putText(self.frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                 
         # Return the last detected coordinates as a tuple
         return (center_x, center_y)
-
-
+    
+    
 
 
 # Define and set input arguments
 MODEL_NAME = "custom_model_lite"
 GRAPH_NAME = 'detect.tflite'  # Set the name of the .tflite file
 LABELMAP_NAME = 'labelmap.txt'  # Set the name of the labelmap file
-min_conf_threshold = 0.3
-resW, resH = '1280x720'.split('x')
+resW, resH = '640x480'.split('x')
 imW, imH = int(resW), int(resH)
 
 # Import TensorFlow libraries
@@ -181,15 +181,20 @@ freq = cv2.getTickFrequency()
 videostream = camera_class(resolution=(imW, imH), framerate=30, record_video=True).start()
 time.sleep(1)
 
+
 while True:
     # Start timer (for calculating frame rate)
     t1 = cv2.getTickCount()
+    # Retrieve detection results
+    boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0]  # Bounding box coordinates of detected objects
+    scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0]  # Confidence of detected objects
 
+    # Call the function to detect objects and get their coordinates
+    detected_objects = videostream.detect_x_y(boxes, scores, imW, imH)
     # Grab frame from the video stream
-    frame1 = videostream.read()
+    frame = videostream.read()
 
     # Acquire frame and resize to the expected shape [1xHxWx3]
-    frame = frame1.copy()
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame_resized = cv2.resize(frame_rgb, (width, height))
     input_data = np.expand_dims(frame_resized, axis=0)
@@ -202,13 +207,7 @@ while True:
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
 
-    # Retrieve detection results
-    boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0]  # Bounding box coordinates of detected objects
-    scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0]  # Confidence of detected objects
-
-    # # # Call the function to detect objects and get their coordinates
-    detected_objects = videostream.detect_x_y(frame, boxes, scores, imW, imH)
-    print(detected_objects)
+    detected_objects = videostream.detect_x_y(boxes, scores, imW, imH)
 
 
     # Draw framerate in the corner of the frame
@@ -224,6 +223,7 @@ while True:
 
     # Press 'q' to quit
     if cv2.waitKey(1) == ord('q'):
+        videostream.stop()
         break
 
 # Clean up
