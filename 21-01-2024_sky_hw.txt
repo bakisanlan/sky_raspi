@@ -15,5 +15,7 @@
 10. İlk tahmin edilen yerde objeyi görmezse, auto missiona mantıklı şekilde dön(simdilik pas gecin)
 11. Kendi 4 noktalı seneryomuza göre 269. ve 305. satırdaki kodları değiştirin
 12. if (dist_from_drop_point <= 0 olarak değişin)
+13. Utility Classı içine sokulan vehicle objesi zamanla değişiyor mu test edin.
+14. takeoff, goto gibi kendi yazdığınız fonksiyonları tek bir class adı altında dışarı taşıyın. For döngüsü kullanın.
 
  
