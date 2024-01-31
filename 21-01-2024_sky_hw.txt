@@ -1,6 +1,5 @@
 1) Gazebo ateş ekleme
 
-
 2) Gazebo teknofest görev implementation
 
 1. Servo ile ilgili şeyler kalkacak
@@ -17,5 +16,12 @@
 12. if (dist_from_drop_point <= 0 olarak değişin)
 13. Utility Classı içine sokulan vehicle objesi zamanla değişiyor mu test edin.
 14. takeoff, goto gibi kendi yazdığınız fonksiyonları tek bir class adı altında dışarı taşıyın. For döngüsü kullanın.
+15. goto fonksiyonu içine target = (lat,lon,alt) girsin.
+16. if self.remainingDistance <= self.targetDistance * 0.2: >>> if self.remainingDistance <= tam sayı
+17. goto'nun içindeki time.sleep(2) kalkacak.
+18. add_mission(self,takeoff_alt,waypoints_list) olsun
+19. takeoff >> arm olacak
+20. if (detected_obj_px != None) and (count == 1): 
+21. time.sleep OLMAYACAK
+22. if dist_vehicle_obj > 65 yerine ikinci waypointe giderken deyin
 
- 
