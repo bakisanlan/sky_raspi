@@ -100,7 +100,7 @@ camera_bot.detect_x_y(frame_size,False,True)
 print('Camera recording has been started')
 
 
-missions.takeoff()
+missions.arm()
 missions.add_mission()
 print('Auto mission is starting...')
 
@@ -124,16 +124,16 @@ while True:
     time.sleep(1)
         
 
-    #obje detect edilene kadar oto ucmaya devam et
-    if detected_obj_px != None:
-        print('Ates tespit edildi')
+    #continue auto flying until object is detected
+    if detected_obj_px != None and (count == 1):
+        print('Fire detected')
         obj_mean_lat_lon = util.get_obj_mean_lat_lon(detected_obj_px) 
         #obj_mean_NED_rel_vehicle_true_N = geodetic_to_NED(vehicle.location.global_frame, obj_mean_lat_lon)
         #obj_mean_NED_rel_vehicle_N = yaw_transformation(math.degrees(vehicle.attitude.yaw),obj_mean_NED_rel_vehicle_true_N)
         
-        # tahmin edilen obje lokasyonu sinirlarin icinde mi
+        # Is the estimated object location within the limits?
         if (obj_mean_lat_lon[0] < max_lat) and (obj_mean_lat_lon[0] > min_lat) and (obj_mean_lat_lon[1] < max_lon) and (obj_mean_lat_lon[1] > min_lon):
-            print('Objenin ilk tahmini koordinatlari')
+            print('First estimated coordinates of the object')
             print('lat: {}, lon {}'.format(obj_mean_lat_lon[0],obj_mean_lat_lon[1]))                    
             
             util.print_now()
@@ -142,148 +142,145 @@ while True:
 
                 camera_bot = camera_class(video,fourcc,out)
                 detected_obj_px = camera_bot.detect_x_y(frame_size,False,True) 
-                #object detect edildikten sonra aradaki mesafe 50 metreden buyuk olana kadar devam et
+                #After the object is detected, continue until the distance is greater than 50 meters.
                 dist_vehicle_obj = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
-                print('Atese olan uzaklik: {}'.format(dist_vehicle_obj)) 
+                print('Distance from fire: {}'.format(dist_vehicle_obj)) 
                 util.print_now()
 
 
-                if next_waypoint == 4 and count == 1:
+                if next_waypoint == 4:
                         
-                        camera_bot = camera_class(video,fourcc,out)
-                        detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)
-                        time.sleep(2)
-                        print("Cut the loop ")
+                    camera_bot = camera_class(video,fourcc,out)
+                    detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)
 
-                        while vehicle.mode != VehicleMode("GUIDED"):
-                            vehicle.mode = VehicleMode("GUIDED")
-                            time.sleep(0.5)
-                    
-                        print(vehicle.mode)
+                    print("Cut the loop and uav directs to the object.")
+
+                    while vehicle.mode != VehicleMode("GUIDED"):
+                        vehicle.mode = VehicleMode("GUIDED")
+                        time.sleep(0.5)
                 
-                        obj_mean_lat_lon_rel = LocationGlobalRelative(obj_mean_lat_lon[0],obj_mean_lat_lon[1],camera_alt)
-                        print('Objeye goto ile yoneliyor')
-                        missions.goto(obj_mean_lat_lon[0],obj_mean_lat_lon[1])
-                        
-                        #objeye yonlendiginde tekrar objeyi detect et
-                        while True: #3
+                    print(vehicle.mode)
+            
+                    obj_mean_lat_lon_rel = LocationGlobalRelative(obj_mean_lat_lon[0],obj_mean_lat_lon[1],camera_alt)
+                    print('Directs to the object with goto.')
+                    missions.goto(obj_mean_lat_lon_rel)
+                    
+                    #Detect the object again when directed to the object
+                    while True: #3
 
-                            util.print_now()
-                            camera_bot = camera_class(video,fourcc,out)
-                            detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px
-                            obj_mean_lat_lon = (obj_mean_lat_lon_rel.lat, obj_mean_lat_lon_rel.lon)
-                            dist_vehicle_obj_guess = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
+                        util.print_now()
+                        camera_bot = camera_class(video,fourcc,out)
+                        detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px
+                        obj_mean_lat_lon = (obj_mean_lat_lon_rel.lat, obj_mean_lat_lon_rel.lon)
+                        dist_vehicle_obj_guess = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
 
-                            if detected_obj_px != None:
-                                #objeye giderken 10 metre kala tekrar eski oto missiona don ve ortalamasini al
-                                obj_mean_lat_lon_bef_wp = util.get_obj_mean_lat_lon_wp(detected_obj_px,obj_mean_lat_lon) 
-                                
-                                #objenin ustunde oldugunda ucaga en yakin wpden devam etmek
-                                temp_distance = 99999999
-                                
-                                missions.cmds.next = 5
-                                missions.cmds.upload()
+                        if detected_obj_px != None:
+                            #When you are 10 meters away from the object, go back to the old auto mission and take the average.
+                            obj_mean_lat_lon_bef_wp = util.get_obj_mean_lat_lon_wp(detected_obj_px,obj_mean_lat_lon) 
+                    
+                            
+                            missions.cmds.next = 5
+                            missions.cmds.upload()
+                            time.sleep(0.5)
+
+                            while vehicle.mode != VehicleMode("AUTO"):
+                                vehicle.mode = VehicleMode("AUTO")
                                 time.sleep(0.5)
 
-                                while vehicle.mode != VehicleMode("AUTO"):
-                                    vehicle.mode = VehicleMode("AUTO")
-                                    time.sleep(0.5)
 
+                            print('Going to Wp4 ...')
 
-                                print('4. Wpye gidiyor..')
+                            camera_bot = camera_class(video,fourcc,out)
+                            time_start = time.time()
+                            while (time.time() - time_start) < 2:  #!
+                                detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px  
+                                if detected_obj_px != None:   
+                                    obj_mean_lat_lon_aft_wp = util.get_obj_mean_lat_lon(detected_obj_px) 
+                                    final_obj_mean_lat = (obj_mean_lat_lon_bef_wp[0] +obj_mean_lat_lon_aft_wp[0]) / 2
+                                    final_obj_mean_lon = (obj_mean_lat_lon_bef_wp[1] +obj_mean_lat_lon_aft_wp[1]) / 2 
+                                    final_obj_mean_lat_lon = (final_obj_mean_lat,final_obj_mean_lon)
 
-                                camera_bot = camera_class(video,fourcc,out)
-                                time_start = time.time()
-                                while (time.time() - time_start) < 2:  #!
-                                    detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px  
-                                    if detected_obj_px != None:   
-                                        obj_mean_lat_lon_aft_wp = util.get_obj_mean_lat_lon(detected_obj_px) 
-                                        final_obj_mean_lat = (obj_mean_lat_lon_bef_wp[0] +obj_mean_lat_lon_aft_wp[0]) / 2
-                                        final_obj_mean_lon = (obj_mean_lat_lon_bef_wp[1] +obj_mean_lat_lon_aft_wp[1]) / 2 
-                                        final_obj_mean_lat_lon = (final_obj_mean_lat,final_obj_mean_lon)
-
-                    
-                                        while True: #2
-                                            dist_vehicle_obj = util.distance_fun(final_obj_mean_lat_lon,vehicle.location.global_frame)
-                                            print('Atese olan uzaklik: {} '.format(dist_vehicle_obj))
-                                            if dist_vehicle_obj > 65:
-                                                print('Aradaki mesafe 65 metreyi gecti, atese gidiyor')
-                                                
-                                                final_obj_mean_lat_lon = LocationGlobalRelative(final_obj_mean_lat_lon[0],final_obj_mean_lat_lon[1],camera_alt)
-                                                while vehicle.mode != VehicleMode("GUIDED"):
-                                                    vehicle.mode = VehicleMode("GUIDED")
-                                                    time.sleep(0.5)
-
-                                                missions.goto(final_obj_mean_lat_lon.lat,final_obj_mean_lat_lon.lon)
-                                                time_start = time.time()
-                                                while True: #1
-
-                                                    #final_obj_mean_lat_lon = LocationGlobalRelative(final_obj_mean_lat_lon[0],final_obj_mean_lat_lon[1],camera_alt)
-                                                    dist_from_drop_point = util.falling_algo(vehicle, vehicle.location.global_frame,final_obj_mean_lat_lon)[0]
-                                                    bearing_to_wp = get_bearing(vehicle.location.global_frame,final_obj_mean_lat_lon)
-                                                    util.print_now()
-                                                    print('Dist from droppoint is: {}, Bearing: {}'.format(dist_from_drop_point,bearing_to_wp))
-                                                    if (dist_from_drop_point <= 0) and (abs(bearing_to_wp - math.degrees(vehicle.attitude.yaw)) < 10):
-                                                        
-                                                        if not isBack_bombed:
-                                                            # ServoControlBot.DropBackBomb()
-                                                            isBack_bombed = True 
-                                                            back_servo_time = front_servo_time
-                                                            util.print_now()
-                                                            print('Arka bomba birakildi')
-                                                        elif isBack_bombed:
-                                                            # ServoControlBot.DropFrontBomb()
-                                                            isFront_bombed = True         
-                                                            util.print_now()
-                                                            print('On bomba birakildi')                                          
-
-                                                        print('otoya donuyor')
-
-                                                        while vehicle.mode != VehicleMode("AUTO"):
-                                                            vehicle.mode = VehicleMode("AUTO")
-                                                            time.sleep(0.5)
-
-                                                        print("Home location'a gidiyor")
-                                                        missions.cmds.commands.clear()
-                                                        time.sleep(0.5)
-                                                        missions.land()
-                                                        vehicle.close()
-
-                                                        break #1
-                                                    
-                                                    # loiter yapmayi onlemek icin 20 saniye 
-                                                    elif (time.time() - time_start) > 20:
-                                                        print('zaman asimina ugradi otoya donuyor')
-                                                        break #1
-                                                    
-                                                #ustteki loop kirilirsa auto ya al
-                                                missions.cmds.next = 4
-                                                missions.cmds.upload()
-                                                while vehicle.mode != VehicleMode("AUTO"):
-                                                    vehicle.mode = VehicleMode("AUTO")
-                                                    time.sleep(0.5)
-                                                break #2
-                                        break #! 
-
-                                while vehicle.mode != VehicleMode("AUTO"):
-                                    vehicle.mode = VehicleMode("AUTO")
-                                    time.sleep(0.5) 
-                                print('2 saniye icinde objeyi tespit edemedi, otoya donuyor')
-                                break #3 yeni         
-                                    #objeye yeteri kadar uzakliktaysa objeye git
-                                    #break #3 eski
                 
-                            #eger tahmin edilen obje lokasyonuna giderken objeyi gormezse loopu ve en basa don
-                            elif dist_vehicle_obj_guess < 5:
-                                print('Obje giderken goremedi, autoya dondu')
-                                
-                                while vehicle.mode != VehicleMode("AUTO"):
-                                    vehicle.mode = VehicleMode("AUTO")
-                                    time.sleep(0.5)
-                                break #3
-                        break #4
-            else:
-                print('Tespit edilen obje sinirin disinda, otoya donuyor') 
+                                    while True: #2
+                                        dist_vehicle_obj = util.distance_fun(final_obj_mean_lat_lon,vehicle.location.global_frame)
+                                        print('Distance from fire: {} '.format(dist_vehicle_obj))
+                                        if missions.cmds.next == 2:
+                                            
+                                            
+                                            final_obj_mean_lat_lon = LocationGlobalRelative(final_obj_mean_lat_lon[0],final_obj_mean_lat_lon[1],camera_alt)
+                                            while vehicle.mode != VehicleMode("GUIDED"):
+                                                vehicle.mode = VehicleMode("GUIDED")
+                                                time.sleep(0.5)
+
+                                            missions.goto(final_obj_mean_lat_lon) 
+                                            time_start = time.time()
+                                            while True: #1
+
+                                                #final_obj_mean_lat_lon = LocationGlobalRelative(final_obj_mean_lat_lon[0],final_obj_mean_lat_lon[1],camera_alt)
+                                                dist_from_drop_point = util.falling_algo(vehicle, vehicle.location.global_frame,final_obj_mean_lat_lon)[0]
+                                                bearing_to_wp = get_bearing(vehicle.location.global_frame,final_obj_mean_lat_lon)
+                                                util.print_now()
+                                                print('Dist from droppoint is: {}, Bearing: {}'.format(dist_from_drop_point,bearing_to_wp))
+                                                if (dist_from_drop_point <= 0) and (abs(bearing_to_wp - math.degrees(vehicle.attitude.yaw)) < 10):
+                                                    
+                                                    if not isBack_bombed:
+                                                        # ServoControlBot.DropBackBomb()
+                                                        isBack_bombed = True 
+                                                        back_servo_time = front_servo_time
+                                                        util.print_now()
+                                                        print('The rear bomb was dropped.')
+                                                    elif isBack_bombed:
+                                                        # ServoControlBot.DropFrontBomb()
+                                                        isFront_bombed = True         
+                                                        util.print_now()
+                                                        print('The front bomb was dropped.')                                          
+
+                                                    print('Turning back to Auto mode.')
+
+                                                    while vehicle.mode != VehicleMode("AUTO"):
+                                                        vehicle.mode = VehicleMode("AUTO")
+                                                        time.sleep(0.5)
+
+                                                    print("UAV is going to home location.")
+                                                    missions.cmds.commands.clear()
+                                                    time.sleep(0.5)
+                                                    missions.land()
+                                                    vehicle.close()
+
+                                                    break #1
+                                                
+                                                # 20 seconds to avoid loitering
+                                                elif (time.time() - time_start) > 20:
+                                                    print('Timed out, returns to Auto mode')
+                                                    break #1
+                                                
+                                            #If the loop above is broken, switch to Auto mode
+                                            missions.cmds.next = 4
+                                            missions.cmds.upload()
+                                            while vehicle.mode != VehicleMode("AUTO"):
+                                                vehicle.mode = VehicleMode("AUTO")
+                                                time.sleep(0.5)
+                                            break #2
+                                    break #! 
+
+                            while vehicle.mode != VehicleMode("AUTO"):
+                                vehicle.mode = VehicleMode("AUTO")
+                                time.sleep(0.5) 
+                            print("Couldn't detect the object within 2 seconds, goes back to auto")
+                            break #3 yeni         
+                                #If it is far enough away from the object, go to the object
+                              
+                        #If it does not see the object while going to the predicted object location, loop and go back to the beginning.
+                        elif dist_vehicle_obj_guess < 20:
+                            print("UAV couldn't see the object during flight, so UAV switched to Auto mode.")
+                            
+                            while vehicle.mode != VehicleMode("AUTO"):
+                                vehicle.mode = VehicleMode("AUTO")
+                                time.sleep(0.5)
+                            break #3
+                    break #4
+        else:
+            print('The detected object is outside the boundary, it turns into auto') 
 
         
                                                                         

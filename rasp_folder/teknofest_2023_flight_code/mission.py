@@ -10,62 +10,59 @@ class DroneController:
         self.cmds = None
         self.mission = []
 
-    def takeoff(self):
+    def arm(self):
         while self.vehicle.is_armable is not True:
-            print("İHA arm edilebilir durumda değil.")
-            time.sleep(1)
+            print("UAV is not armable.")
+            time.sleep(0.5)
 
-        print("İHA arm edilebilir.")
+        print("UAV can be armable.")
         self.vehicle.mode = VehicleMode("GUIDED")
         self.vehicle.armed = True
 
         while self.vehicle.armed is not True:
-            print("İHA arm ediliyor...")
+            print("UAV is arming...")
             time.sleep(0.5)
 
-        print("İHA arm edildi.")
+        print("UAV is armed.")
 
     def get_distance_metres(self, aLocation1, aLocation2):
         dlat = aLocation2.lat - aLocation1.lat
         dlong = aLocation2.lon - aLocation1.lon
         return math.sqrt((dlat*dlat) + (dlong*dlong)) * 1.113195e5
 
-    def goto(self, lat, lon, gotoFunction=None):
+    def goto(self, target, gotoFunction=None):
         if gotoFunction is None:
             gotoFunction = self.vehicle.simple_goto
 
         currentLocation = self.vehicle.location.global_relative_frame
-        targetLocation = LocationGlobalRelative(lat, lon, 40)
+        targetLocation = LocationGlobalRelative(target[0], target[1], target[2])
         self.targetDistance = self.get_distance_metres(currentLocation, targetLocation)
         gotoFunction(targetLocation)
 
-        while self.vehicle.mode.name == "GUIDED":
-            self.remainingDistance = self.get_distance_metres(self.vehicle.location.global_relative_frame, targetLocation)
-            print("Distance to target: ", self.remainingDistance)
-            if self.remainingDistance <= self.targetDistance * 0.2:
-                print("Reached target")
-                break
-            time.sleep(2)
+    # WAYPOINTS
+    waypoints = [
+        (40.2311226, 29.0092707, 40),
+        (40.2330065, 29.0092707, 40),
+        (40.2330065, 29.0074897, 40),
+        (40.2311226, 29.0074897, 40)
+    ]
+    takeoff_alt = 40
 
-    def add_mission(self):
+    def add_mission(self, waypoints, takeoff_alt):
         self.cmds = self.vehicle.commands
         self.mission = []
+        self.waypoints = waypoints
+        self.takeoff_alt = takeoff_alt
 
         self.cmds.download()
         self.cmds.wait_ready()
         self.vehicle.commands.clear()
-        time.sleep(1)
+        time.sleep(0.5)
 
         # TAKEOFF
-        self.mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, 0, 40))
+        self.mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, 0, takeoff_alt))
 
-        # WAYPOINTS
-        waypoints = [
-            (40.2311226, 29.0092707, 40),
-            (40.2330065, 29.0092707, 40),
-            (40.2330065, 29.0074897, 40),
-            (40.2311226, 29.0074897, 40)
-        ]
+        
 
         for waypoint in waypoints:
             self.mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 10, 0, 0, 0, *waypoint))
@@ -82,7 +79,7 @@ class DroneController:
     def land(self):
         
         self.cmds.clear()
-        time.sleep(1)
+        time.sleep(0.5)
 
         self.cmds.add(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, 10, 0, 0, 0, 40.22948110, 29.00889869, 0))
         self.cmds.upload()
