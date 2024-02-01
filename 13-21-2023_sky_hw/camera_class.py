@@ -27,6 +27,7 @@ class camera_class():
         self.start_time = time.time()
         self.video_duration = 30
         self.video_counter = 1
+        self.count = 0
 
         if self.record_video:
             self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (imW, imH))
@@ -48,11 +49,45 @@ class camera_class():
                 return
 
             # Otherwise, grab the next frame from the stream
-            (self.grabbed, self.frame) = self.video.read()
+            (self.grabbed, frame) = self.video.read()
 
             # Record video if enabled
             if self.record_video and self.recording:
-                self.out.write(self.frame)
+                # Retrieve detection results
+                    # Acquire frame and resize to the expected shape [1xHxWx3]
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame_resized = cv2.resize(frame_rgb, (width, height))
+                input_data = np.expand_dims(frame_resized, axis=0)
+
+                # Normalize pixel values if using a floating model (i.e., if the model is non-quantized)
+                if floating_model:
+                    input_data = (np.float32(input_data) - input_mean) / input_std
+
+                # Perform the actual detection by running the model with the image as input
+                interpreter.set_tensor(input_details[0]['index'], input_data)
+                interpreter.invoke()
+                boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0]  # Bounding box coordinates of detected objects
+                scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0]  # Confidence of detected objects
+
+                # Draw bounding boxes on the frame
+                for i in range(len(scores)):
+                    if 0.8 < scores[i] <= 1.0:
+                        xmin = int(max(1, (boxes[i][1] * imW)))
+                        ymin = int(max(1, (boxes[i][0] * imH)))
+                        xmax = int(min(imW, (boxes[i][3] * imW)))
+                        ymax = int(min(imH, (boxes[i][2] * imH)))
+
+                        # Draw bounding box
+                        cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
+
+                        # Draw object coordinates
+                        center_x = int((xmin + xmax) / 2)
+                        center_y = int((ymin + ymax) / 2)
+                        coordinates_text = f'X: {center_x}, Y: {center_y}'
+                        cv2.putText(frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+
+                # Write the frame with bounding boxes to the video file
+                self.out.write(frame)
 
                 # Check if it's time to start a new video segment
                 elapsed_time = time.time() - self.start_time
@@ -60,6 +95,10 @@ class camera_class():
                     self.stop_recording()
                     self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (imW, imH))
                     self.video_counter += 1
+
+            # Update the current frame
+            self.frame = frame
+
 
     def read(self):
         # Return the most recent frame
@@ -110,12 +149,9 @@ class camera_class():
         return (center_x, center_y)
     
     
-
-
 # Define and set input arguments
 MODEL_NAME = "custom_model_lite"
 GRAPH_NAME = 'detect.tflite'  # Set the name of the .tflite file
-LABELMAP_NAME = 'labelmap.txt'  # Set the name of the labelmap file
 resW, resH = '640x480'.split('x')
 imW, imH = int(resW), int(resH)
 
@@ -128,25 +164,11 @@ else:
     from tensorflow.lite.python.interpreter import Interpreter
 
 
-
 # Get the path to the current working directory
 CWD_PATH = os.getcwd()
 
 # Path to .tflite file, which contains the model that is used for object detection
 PATH_TO_CKPT = os.path.join(CWD_PATH, MODEL_NAME, GRAPH_NAME)
-
-# Path to label map file
-PATH_TO_LABELS = os.path.join(CWD_PATH, MODEL_NAME, LABELMAP_NAME)
-
-# Load the label map
-with open(PATH_TO_LABELS, 'r') as f:
-    labels = [line.strip() for line in f.readlines()]
-
-# Have to do a weird fix for label map if using the COCO "starter model" from
-# https://www.tensorflow.org/lite/models/object_detection/overview
-# The first label is '???', which has to be removed.
-if labels[0] == '???':
-    del labels[0]
 
 # Load the TensorFlow Lite model.
 interpreter = Interpreter(model_path=PATH_TO_CKPT)
@@ -181,38 +203,17 @@ freq = cv2.getTickFrequency()
 videostream = camera_class(resolution=(imW, imH), framerate=30, record_video=True).start()
 time.sleep(1)
 
-
 while True:
     # Start timer (for calculating frame rate)
     t1 = cv2.getTickCount()
-    # Retrieve detection results
-    boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0]  # Bounding box coordinates of detected objects
-    scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0]  # Confidence of detected objects
 
-    # Call the function to detect objects and get their coordinates
-    detected_objects = videostream.detect_x_y(boxes, scores, imW, imH)
     # Grab frame from the video stream
     frame = videostream.read()
-
-    # Acquire frame and resize to the expected shape [1xHxWx3]
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame_resized = cv2.resize(frame_rgb, (width, height))
-    input_data = np.expand_dims(frame_resized, axis=0)
-
-    # Normalize pixel values if using a floating model (i.e., if the model is non-quantized)
-    if floating_model:
-        input_data = (np.float32(input_data) - input_mean) / input_std
-
-    # Perform the actual detection by running the model with the image as input
-    interpreter.set_tensor(input_details[0]['index'], input_data)
-    interpreter.invoke()
-
-    detected_objects = videostream.detect_x_y(boxes, scores, imW, imH)
-
 
     # Draw framerate in the corner of the frame
     cv2.putText(frame, 'FPS: {0:.2f}'.format(frame_rate_calc), (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2,
                 cv2.LINE_AA)
+
     # All the results have been drawn on the frame, so it's time to display it
     cv2.imshow('Object detector', frame)
 
