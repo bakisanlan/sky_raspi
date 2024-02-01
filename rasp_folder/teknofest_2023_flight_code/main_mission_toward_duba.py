@@ -100,8 +100,16 @@ camera_bot.detect_x_y(frame_size,False,True)
 print('Camera recording has been started')
 
 
+# WAYPOINTS
+waypoints = [
+    (40.2311226, 29.0092707, 40),
+    (40.2330065, 29.0092707, 40),
+    (40.2330065, 29.0074897, 40),
+    (40.2311226, 29.0074897, 40)
+]
+takeoff_alt = 40
 missions.arm()
-missions.add_mission()
+missions.add_mission(waypoints,takeoff_alt)
 print('Auto mission is starting...')
 
 while vehicle.mode != VehicleMode("AUTO"):
