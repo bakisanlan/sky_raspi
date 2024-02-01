@@ -146,15 +146,13 @@ while True:
             
             util.print_now()
             while True: #4
-
-
+                
                 camera_bot = camera_class(video,fourcc,out)
                 detected_obj_px = camera_bot.detect_x_y(frame_size,False,True) 
                 #After the object is detected, continue until the distance is greater than 50 meters.
                 dist_vehicle_obj = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
                 print('Distance from fire: {}'.format(dist_vehicle_obj)) 
                 util.print_now()
-
 
                 if next_waypoint == 4:
                         
@@ -184,9 +182,9 @@ while True:
 
                         if detected_obj_px != None:
                             #When you are 10 meters away from the object, go back to the old auto mission and take the average.
+                            ## !!!!
                             obj_mean_lat_lon_bef_wp = util.get_obj_mean_lat_lon_wp(detected_obj_px,obj_mean_lat_lon) 
                     
-                            
                             missions.cmds.next = 5
                             missions.cmds.upload()
                             time.sleep(0.5)
