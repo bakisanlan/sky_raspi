@@ -80,35 +80,20 @@ class camera_class():
                 # Retrieve detection results
                     # Acquire frame and resize to the expected shape [1xHxWx3]
                 frame_rgb = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
-                frame_resized = cv2.resize(frame_rgb, (width, height))
+                frame_resized = cv2.resize(frame_rgb, (self.width, self.height))
                 input_data = np.expand_dims(frame_resized, axis=0)
-
+                input_mean = 127.5
+                input_std = 127.5
                 # Normalize pixel values if using a floating model (i.e., if the model is non-quantized)
-                if floating_model:
+                if self.floating_model:
                     input_data = (np.float32(input_data) - input_mean) / input_std
 
                 # Perform the actual detection by running the model with the image as input
-                interpreter.set_tensor(input_details[0]['index'], input_data)
-                interpreter.invoke()
-                boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0]  # Bounding box coordinates of detected objects
-                scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0]  # Confidence of detected objects
-
-                # Draw bounding boxes on the frame
-                for i in range(len(scores)):
-                    if 0.8 < scores[i] <= 1.0:
-                        xmin = int(max(1, (boxes[i][1] * imW)))
-                        ymin = int(max(1, (boxes[i][0] * imH)))
-                        xmax = int(min(imW, (boxes[i][3] * imW)))
-                        ymax = int(min(imH, (boxes[i][2] * imH)))
-
-                        # Draw bounding box
-                        cv2.rectangle(self.frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
-
-                        # Draw object coordinates
-                        center_x = int((xmin + xmax) / 2)
-                        center_y = int((ymin + ymax) / 2)
-                        coordinates_text = f'X: {center_x}, Y: {center_y}'
-                        cv2.putText(self.frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
+                self.interpreter.invoke()
+                boxes = self.interpreter.get_tensor(self.output_details[self.boxes_idx]['index'])[0]  # Bounding box coordinates of detected objects
+                scores = self.interpreter.get_tensor(self.output_details[self.scores_idx]['index'])[0]  # Confidence of detected objects
+                self.detect_x_y(boxes, scores, self.imW, self.imH)
 
                 # Write the frame with bounding boxes to the video file
                 self.out.write(self.frame)
@@ -117,7 +102,7 @@ class camera_class():
                 elapsed_time = time.time() - self.start_time
                 if elapsed_time > self.video_duration:
                     self.stop_recording()
-                    self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (imW, imH))
+                    self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (self.imW, self.imH))
                     self.video_counter += 1
                     # All the results have been drawn on the frame, so it's time to display it
                 if self.showvideo:
@@ -151,27 +136,27 @@ class camera_class():
 
 
     def detect_x_y(self, boxes, scores, imW, imH):
-        center_x = 0  # Initialize center_x outside the loop
-        center_y = 0  # Initialize center_y outside the loop
-        for i in range(len(scores)):
-            if 0.3 < scores[i] <= 1.0:
-                xmin = int(max(1, (boxes[i][1] * imW)))
-                ymin = int(max(1, (boxes[i][0] * imH)))
-                xmax = int(min(imW, (boxes[i][3] * imW)))
-                ymax = int(min(imH, (boxes[i][2] * imH)))
+        self.center_x= None
+        self.center_y = None
+        max_score_index =np.argmax(scores)
+        if 0.3 < scores[max_score_index] <= 1.0:
+            
+            xmin = int(max(1, (boxes[max_score_index][1] * imW)))
+            ymin = int(max(1, (boxes[max_score_index][0] * imH)))
+            xmax = int(min(imW, (boxes[max_score_index][3] * imW)))
+            ymax = int(min(imH, (boxes[max_score_index][2] * imH)))
 
-                center_x = int((xmin + xmax) / 2)
-                center_y = int((ymin + ymax) / 2)
+            self.center_x = int((xmin + xmax) / 2)
+            self.center_y = int((ymin + ymax) / 2)
 
-                # Draw bounding box
-                cv2.rectangle(self.frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
+            # Draw bounding box
+            cv2.rectangle(self.frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
 
-                # Draw object coordinates
-                coordinates_text = f'X: {center_x}, Y: {center_y}'
-                cv2.putText(self.frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                
-        # Return the last detected coordinates as a tuple
-        return (center_x, center_y)
+            # Draw object coordinates
+            coordinates_text = f'X: {self.center_x}, Y: {self.center_y}'
+            cv2.putText(self.frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+
+
     
     def initialize_model(self):
         # Define and set input arguments
@@ -179,7 +164,7 @@ class camera_class():
         GRAPH_NAME = 'detect.tflite'
         LABELMAP_NAME = 'labelmap.txt'
         resW, resH = '640x480'.split('x')
-        imW, imH = int(resW), int(resH)
+        self.imW, self.imH = int(resW), int(resH)
 
         # Import TensorFlow libraries
         pkg = importlib.util.find_spec('tflite_runtime')
@@ -214,14 +199,14 @@ class camera_class():
 
         self.floating_model = (self.input_details[0]['dtype'] == np.float32)
 
+
+
         outname = self.output_details[0]['name']
         if 'StatefulPartitionedCall' in outname:
             self.boxes_idx, self.classes_idx, self.scores_idx = 1, 3, 0
         else:
             self.boxes_idx, self.classes_idx, self.scores_idx = 0, 1, 2
-        # Perform object detection
-        boxes = self.interpreter.get_tensor(self.output_details[self.boxes_idx]['index'])[0]
-        scores = self.interpreter.get_tensor(self.output_details[self.scores_idx]['index'])[0]
+
         
     
 # # Define and set input arguments
