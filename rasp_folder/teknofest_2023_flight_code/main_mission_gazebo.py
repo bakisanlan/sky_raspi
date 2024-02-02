@@ -2,7 +2,6 @@ from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGloba
 import time 
 import math
 from pymavlink import mavutil
-# import dronekit
 import geopy.distance
 # from gpiozero import Servo
 #import gpiozero
@@ -22,10 +21,15 @@ from get_bearing import get_bearing
 from math import radians, sin, cos, sqrt,atan2
 from mission import DroneController
 from util import Utility
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+
 
 
 
 print("Trying to connect to the vehicle...")
+
 vehicle = connect("127.0.0.1:14550", wait_ready=True)
 print("Connected to the vehicle.")
 
