@@ -82,9 +82,7 @@ if home_location == None:
 # if vehicle.mode == VehicleMode('AUTO'):
 #     vehicle.mode = VehicleMode('MANUAL')
 
-#initiating camera recording
-camera_bot.detect_x_y(frame_size,False,True)
-print('Camera recording has been started')
+
 
 
 # WAYPOINTS
@@ -107,7 +105,7 @@ count = 0
 
 while True:
 
-    detected_obj_px = camera_bot.detect_x_y(frame_size,True,True)
+    detected_obj_px = [camera_bot.center_x, camera_bot.center_y]
     
     if vehicle.commands.next == 5:
         count = 1
@@ -133,7 +131,7 @@ while True:
             util.print_now()
             while True: #4
                 
-                detected_obj_px = camera_bot.detect_x_y(frame_size,False,True) 
+                detected_obj_px = [camera_bot.center_x, camera_bot.center_y]
                 #After the object is detected, continue until the distance is greater than 50 meters.
                 dist_vehicle_obj = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
                 print('Distance from fire: {}'.format(dist_vehicle_obj)) 
@@ -141,7 +139,7 @@ while True:
 
                 if next_waypoint == 4:
                         
-                    detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)
+                    detected_obj_px = [camera_bot.center_x, camera_bot.center_y]
 
                     print("Cut the loop and uav directs to the object.")
 
@@ -159,7 +157,7 @@ while True:
                     while True: #3
 
                         util.print_now()
-                        detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px
+                        detected_obj_px = [camera_bot.center_x, camera_bot.center_y]
                         obj_mean_lat_lon = (obj_mean_lat_lon_rel.lat, obj_mean_lat_lon_rel.lon)
                         dist_vehicle_obj_guess = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
 
@@ -181,7 +179,7 @@ while True:
 
                             time_start = time.time()
                             while (time.time() - time_start) < 2:  #!
-                                detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px  
+                                detected_obj_px = [camera_bot.center_x, camera_bot.center_y]  
                                 if detected_obj_px != None:   
                                     obj_mean_lat_lon_aft_wp = util.get_obj_mean_lat_lon(detected_obj_px) 
                                     final_obj_mean_lat = (obj_mean_lat_lon_bef_wp[0] +obj_mean_lat_lon_aft_wp[0]) / 2
