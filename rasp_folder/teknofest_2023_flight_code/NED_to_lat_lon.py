@@ -1,19 +1,4 @@
-from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal, Command
-import time 
 import math
-from pymavlink import mavutil
-import dronekit
-import geopy.distance
-# from gpiozero import Servo
-# import gpiozero
-from time import sleep
-import cv2      
-import schedule
-# from ServoControl import ServoControl
-from camera_class import camera_class
-#from get_wp_cmd import get_wp_cmd
-import datetime
-import numpy as np
 
 def NED_to_lat_lon(ref_location, north, east):
     # convert north and east values to latitude and longitude offsets

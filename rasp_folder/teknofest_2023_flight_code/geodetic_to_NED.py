@@ -1,29 +1,14 @@
-from dronekit import connect, VehicleMode, LocationGlobalRelative, LocationGlobal, Command
-import time 
-import math
-from pymavlink import mavutil
-import dronekit
-import geopy.distance
-# from gpiozero import Servo
-# import gpiozero
-from time import sleep
-import cv2      
-import schedule
-# from ServoControl import ServoControl
-from camera_class import camera_class
-from falling_algo import falling_algo
 #from get_wp_cmd import get_wp_cmd
-import datetime
-import numpy as np
+import math
 
 # Define a function to convert latitude, longitude, and altitude to Cartesian coordinates
 def geodetic_to_NED(ref_location, target_location):
     # Convert degrees to radians
-    lat0 = ref_location[0]
+    lat0 = ref_location.lat
     lat0 = math.radians(lat0)
-    lon0 = ref_location[1]
+    lon0 = ref_location.lon
     lon0 = math.radians(lon0)
-    h0 = ref_location[2]
+    h0 = ref_location.alt
     
     lat = target_location.lat
     lat = math.radians(lat)

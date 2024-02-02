@@ -36,6 +36,9 @@ class camera_class():
         # Video recording parameters
         self.record_video = record_video
         self.showvideo = showvideo
+        resW, resH = '640x480'.split('x')
+        self.imW, self.imH = int(resW), int(resH)
+
         self.out = None
         self.recording = False
         self.start_time = time.time()
@@ -44,8 +47,9 @@ class camera_class():
         self.count = 0
         self.startProcess()
 
+
         if self.record_video:
-            self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (imW, imH))
+            self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (self.imW, self.imH))
 
     def gazeboCaminfo(self):
         print ("shutdown time!")
@@ -163,8 +167,6 @@ class camera_class():
         MODEL_NAME = "custom_model_lite"
         GRAPH_NAME = 'detect.tflite'
         LABELMAP_NAME = 'labelmap.txt'
-        resW, resH = '640x480'.split('x')
-        self.imW, self.imH = int(resW), int(resH)
 
         # Import TensorFlow libraries
         pkg = importlib.util.find_spec('tflite_runtime')

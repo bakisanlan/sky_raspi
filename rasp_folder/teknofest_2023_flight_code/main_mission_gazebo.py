@@ -8,12 +8,11 @@ import geopy.distance
 #import gpiozero
 from time import sleep
 import cv2      
-import schedule
 #from ServoControl import ServoControl
-from camera_class import camera_class
+from camera_class_gazebo import camera_class
 #from falling_algo import falling_algo
 # from get_wp_cmd import get_wp_cmd
-from obj_NED_rel_home import obj_NED_rel_home
+from obj_NED_rel_vehicle import obj_NED_rel_vehicle
 from datetime import datetime
 from geodetic_to_NED import geodetic_to_NED
 import numpy as np
@@ -49,14 +48,10 @@ back_servo_time = 0.5
 front_servo_time = 2.01
 
 
-    
-#initiliazing camera saving schedule
-schedule.every(45).seconds.do(save_record)
-
 #bomb class
 #ServoControlBot = ServoControl(my_GPIO1, my_GPIO2, min_pw,max_pw)
 #camera class
-camera_bot = camera_class(resolution=(imW, imH), record_video=True, showvideo=True)
+camera_bot = camera_class(record_video=True, showvideo=True)
 rospy.init_node('camera_class', anonymous=True)
 rospy.spin()
 
@@ -149,7 +144,7 @@ while True:
                 
                     print(vehicle.mode)
             
-                    obj_mean_lat_lon_rel = LocationGlobalRelative(obj_mean_lat_lon[0],obj_mean_lat_lon[1],camera_alt)
+                    obj_mean_lat_lon_rel = LocationGlobalRelative(obj_mean_lat_lon[0],obj_mean_lat_lon[1],vehicle.location.global_relative_frame.alt)
                     print('Directs to the object with goto.')
                     missions.goto(obj_mean_lat_lon_rel)
                     
@@ -193,7 +188,7 @@ while True:
                                         if missions.cmds.next == 2:
                                             
                                             
-                                            final_obj_mean_lat_lon = LocationGlobalRelative(final_obj_mean_lat_lon[0],final_obj_mean_lat_lon[1],camera_alt)
+                                            final_obj_mean_lat_lon = LocationGlobalRelative(final_obj_mean_lat_lon[0],final_obj_mean_lat_lon[1],vehicle.location.global_relative_frame.alt)
                                             while vehicle.mode != VehicleMode("GUIDED"):
                                                 vehicle.mode = VehicleMode("GUIDED")
                                                 time.sleep(0.5)

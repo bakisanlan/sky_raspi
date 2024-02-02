@@ -4,8 +4,8 @@ import time
 import math
 import geopy.distance
 import numpy as np
-from camera_class import camera_class
-from obj_NED_rel_home import obj_NED_rel_home
+from camera_class_gazebo import camera_class
+from obj_NED_rel_vehicle import obj_NED_rel_vehicle
 from geodetic_to_NED import geodetic_to_NED
 from NED_to_lat_lon import NED_to_lat_lon
 import importlib.util
