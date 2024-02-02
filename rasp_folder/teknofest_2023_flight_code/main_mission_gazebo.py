@@ -48,22 +48,7 @@ isFront_bombed = False
 back_servo_time = 0.5
 front_servo_time = 2.01
 
-#camera param
-global out,fourcc,video,counter
-counter = 1
-video = cv2.VideoCapture(0)
-frame_size = (640,480)
-video_fps = 24
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter('output0.mp4', fourcc, video_fps, frame_size)
-camera_alt = 40
 
-#video saving function
-def save_record():
-    global out,fourcc,video,counter
-    out.release()
-    out = cv2.VideoWriter('output'+str(counter)+'.mp4', fourcc, video_fps, frame_size)
-    counter += 1
     
 #initiliazing camera saving schedule
 schedule.every(45).seconds.do(save_record)
@@ -122,7 +107,6 @@ count = 0
 
 while True:
 
-    camera_bot = camera_class(video,fourcc,out)
     detected_obj_px = camera_bot.detect_x_y(frame_size,True,True)
     
     if vehicle.commands.next == 5:
@@ -149,7 +133,6 @@ while True:
             util.print_now()
             while True: #4
                 
-                camera_bot = camera_class(video,fourcc,out)
                 detected_obj_px = camera_bot.detect_x_y(frame_size,False,True) 
                 #After the object is detected, continue until the distance is greater than 50 meters.
                 dist_vehicle_obj = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
@@ -158,7 +141,6 @@ while True:
 
                 if next_waypoint == 4:
                         
-                    camera_bot = camera_class(video,fourcc,out)
                     detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)
 
                     print("Cut the loop and uav directs to the object.")
@@ -177,7 +159,6 @@ while True:
                     while True: #3
 
                         util.print_now()
-                        camera_bot = camera_class(video,fourcc,out)
                         detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px
                         obj_mean_lat_lon = (obj_mean_lat_lon_rel.lat, obj_mean_lat_lon_rel.lon)
                         dist_vehicle_obj_guess = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
@@ -198,7 +179,6 @@ while True:
 
                             print('Going to Wp4 ...')
 
-                            camera_bot = camera_class(video,fourcc,out)
                             time_start = time.time()
                             while (time.time() - time_start) < 2:  #!
                                 detected_obj_px = camera_bot.detect_x_y(frame_size,False,True)  #return px  
