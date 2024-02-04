@@ -63,6 +63,7 @@ def rotation_matrix(roll, pitch, yaw):
 def obj_NED_rel_vehicle(euler_angles, pixel_position, cam_pos_ned_inertia, focal_length=620):
     
     roll, pitch, yaw = euler_angles
+    pitch += 10
     
     Xp, Yp = pixel_position[0], pixel_position[1] 
     

@@ -17,7 +17,7 @@ def get_bearing(current_location, target_location):
     bearing = math.degrees(math.atan2(y, x))
 
     # Normalize the bearing to a range of 0 to 360 degrees
-    if bearing < 0:
-        bearing += 360
+    # if bearing < 0:
+    #     bearing += 360
 
     return bearing

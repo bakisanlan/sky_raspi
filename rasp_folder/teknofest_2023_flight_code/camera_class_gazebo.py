@@ -94,7 +94,44 @@ class camera_class():
                 # scores = self.interpreter.get_tensor(self.output_details[self.scores_idx]['index'])[0]  # Confidence of detected objects
                 # self.detect_x_y(boxes, scores, self.imW, self.imH)
 
-                self.detect_x_y()
+                lower1 = np.array([5, 90, 50])                            
+                upper1 = np.array([20, 255, 255])       
+
+                hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
+                mask = cv2.inRange(hsv, lower1, upper1)
+
+                _,contours, hier = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                #print(contours)
+
+                if len(contours) != 0:
+                    contour = max(contours, key = cv2.contourArea)
+                    if cv2.contourArea(contour) > 1:
+                        # x, y, w, h = cv2.boundingRect(contour)
+                        # cv2.rectangle(self.frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+                        rect = cv2.minAreaRect(contour)
+                        box = cv2.boxPoints(rect)
+                        box = np.int0(box)
+                        
+                        mean_x = (box[0][0] + box[2][0])/2
+                        mean_x = np.int64(mean_x)
+                        mean_y = (box[0][1] + box[2][1])/2
+                        mean_y = np.int64(mean_y)
+
+                        cv2.circle(self.frame,(mean_x, mean_y),3,(255,0,0),-1)
+                        cv2.drawContours(self.frame,[box],0,(0,255,0),2)
+
+                        self.center_x = mean_x
+                        self.center_y = mean_y
+                    
+                    else:
+                        self.center_x = None
+                        self.center_y = None
+                else:
+                    self.center_x = None
+                    self.center_y = None
+
+                self.detected_obj_px = np.array([self.center_x, self.center_y])
 
                 # Write the frame with bounding boxes to the video file
                 self.out.write(self.frame)
@@ -106,8 +143,8 @@ class camera_class():
                     self.start_recording('output_{}.mp4'.format(self.video_counter), 30, (self.imW, self.imH))
                     self.video_counter += 1
                     # All the results have been drawn on the frame, so it's time to display it
-                if self.showvideo:
-                    cv2.imshow('Object detector', self.frame)
+                # if self.showvideo:
+                #     cv2.imshow('Object detector', self.frame)
 
     def start_recording(self, output_filename, fps, resolution):
         # Start recording video
@@ -129,77 +166,28 @@ class camera_class():
         # Release the VideoWriter
         self.stop_recording()
 
-    # def detect_x_y(self, boxes, scores, imW, imH):
-    #     self.center_x= None
-    #     self.center_y = None
-    #     #print('deneme')
-    #     max_score_index =np.argmax(scores)
-    #     print(np.max(scores))
-    #     if 0.3 < scores[max_score_index] <= 1.0:
-            
-    #         xmin = int(max(1, (boxes[max_score_index][1] * imW)))
-    #         ymin = int(max(1, (boxes[max_score_index][0] * imH)))
-    #         xmax = int(min(imW, (boxes[max_score_index][3] * imW)))
-    #         ymax = int(min(imH, (boxes[max_score_index][2] * imH)))
-
-    #         self.center_x = int((xmin + xmax) / 2)
-    #         self.center_y = int((ymin + ymax) / 2)
-
-    #         # Draw bounding box
-    #         cv2.rectangle(self.frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
-
-    #         # Draw object coordinates
-    #         coordinates_text = f'X: {self.center_x}, Y: {self.center_y}'
-    #         cv2.putText(self.frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-
-
-    def detect_x_y(self):
+    def detect_x_y(self, boxes, scores, imW, imH):
         self.center_x= None
         self.center_y = None
-
-        hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)  # converting BGR to HSV 
-
-        lower1 = np.array([5, 90, 50])                            
-        upper1 = np.array([20, 255, 255])  
-
-        #lower2 = [160, 100, 20]                            
-        #upper2 = [179, 255, 255]                       # choosing wanted color boundry 
-        #lower2 = np.array(lower2, dtype="uint8")      
-        #upper2 = np.array(upper2, dtype="uint8")  
-
-        mask1 = cv2.inRange(hsv, lower1, upper1)        # mask can be thinking as big binary array that contains
-        #mask2 = cv2.inRange(hsv, lower2, upper2)        # 0 or 1 pixel value that can be considered black or whit
-
-        #mask_f = mask1 + mask2
-        mask_f = mask1
-
-        mask_f = cv2.GaussianBlur(mask_f, (21, 21), 0)  # blurring the frame for reducing noise
-        
-        edge = cv2.Canny(mask_f, 125, 175)              # edge detection 
-
-
-        contours, hier = cv2.findContours(edge, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        
-        masked_output = cv2.bitwise_and(hsv, hsv, mask=mask_f)  # stacking togather mask and original frame with bitwise
-                                                                    # and operator. 'bitwise_and' operator filter just only 
-                                                                    # if both of frame have nonzero values in particular pixel.
-        if len(contours) != 0:
-            contour = max(contours, key = cv2.contourArea)
-
-            rect = cv2.minAreaRect(contour)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
+        #print('deneme')
+        max_score_index =np.argmax(scores)
+        #print(np.max(scores))
+        if 0.3 < scores[max_score_index] <= 1.0:
             
-            mean_x = (box[0][0] + box[2][0])/2
-            mean_x = np.int64(mean_x)
-            mean_y = (box[0][1] + box[2][1])/2
-            mean_y = np.int64(mean_y)
+            xmin = int(max(1, (boxes[max_score_index][1] * imW)))
+            ymin = int(max(1, (boxes[max_score_index][0] * imH)))
+            xmax = int(min(imW, (boxes[max_score_index][3] * imW)))
+            ymax = int(min(imH, (boxes[max_score_index][2] * imH)))
 
-            cv2.circle(self.frame,(mean_x, mean_y),3,(255,0,0),-1)
-            cv2.drawContours(self.frame,[box],0,(0,255,0),2)
-            self.center_x= mean_x
-            self.center_y = mean_y
+            self.center_x = int((xmin + xmax) / 2)
+            self.center_y = int((ymin + ymax) / 2)
 
+            # Draw bounding box
+            cv2.rectangle(self.frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 2)
+
+            # Draw object coordinates
+            coordinates_text = f'X: {self.center_x}, Y: {self.center_y}'
+            cv2.putText(self.frame, coordinates_text, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
 
     def initialize_model(self):
         # Define and set input arguments
@@ -332,3 +320,9 @@ class camera_class():
 # ic = camera_class()
 # rospy.init_node('camera_class', anonymous=True)
 # rospy.spin()
+
+# camera_bot = camera_class(record_video=True, showvideo=True)
+# rospy.init_node('camera_class', anonymous=True)
+
+
+

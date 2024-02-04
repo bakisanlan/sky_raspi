@@ -1,4 +1,5 @@
 import math
+import geopy
 
 def falling_algo(vehicle, current_location, target_location):
     # Constants for falling algorithm

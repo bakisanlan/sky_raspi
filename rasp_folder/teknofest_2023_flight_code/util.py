@@ -13,7 +13,7 @@ from dronekit import connect
 
 
 class Utility:
-    def __init__(self,vehicle):
+    def __init__(self,vehicle,camera_bot):
         # Connect to the vehicle
         self.vehicle = vehicle
         
@@ -24,7 +24,7 @@ class Utility:
         self.initialize_model()
 
         # Initialize camera
-        self.initialize_camera()
+        self.camera_bot = camera_bot
 
     def initialize_model(self):
         # Define and set input arguments
@@ -76,28 +76,28 @@ class Utility:
         boxes = self.interpreter.get_tensor(self.output_details[self.boxes_idx]['index'])[0]
         scores = self.interpreter.get_tensor(self.output_details[self.scores_idx]['index'])[0]
 
-    def initialize_camera(self):
-        # Initialize camera
-        self.camera_bot = camera_class(resolution=(imW, imH), framerate=30, record_video=True).start()
-        resW, resH = '640x480'.split('x')
-        imW, imH = int(resW), int(resH)
+    # def initialize_camera(self):
+    #     # Initialize camera
+    #     self.camera_bot = camera_class(framerate=30, record_video=True).start()
+    #     resW, resH = '640x480'.split('x')
+    #     imW, imH = int(resW), int(resH)
 
 
     def print_obj_loc(self, detected_obj_px):
-        if detected_obj_px != None:
+        if np.all(detected_obj_px != None):
             vehicle_location = self.vehicle.location.global_frame
             #vehicle_ned_rel_home = geodetic_to_NED((vehicle_location.alt,vehicle_location.lon, vehicle_location.lat),(home_location.lat,home_location.lon, home_location.alt))
             #vehicle_ned_rel_home = geodetic_to_NED((vehicle_location.alt,vehicle_location.lon, vehicle_location.lat),(40,20,0))
             vehicle_ned_rel_home = geodetic_to_NED(self.home_location,vehicle_location)
-            obj_ned_rel_home = obj_NED_rel_home([math.degrees(self.vehicle.attitude.roll),math.degrees(self.vehicle.attitude.pitch),math.degrees(self.vehicle.attitude.yaw)],detected_obj_px,list(vehicle_ned_rel_home))
-            obj_ned_rel_vehicle = [obj_ned_rel_home[0]-vehicle_ned_rel_home[0], obj_ned_rel_home[1]-vehicle_ned_rel_home[1], obj_ned_rel_home[2]-vehicle_ned_rel_home[2]]
+            obj_ned_rel_vehicle = obj_NED_rel_vehicle([math.degrees(self.vehicle.attitude.roll),math.degrees(self.vehicle.attitude.pitch),math.degrees(self.vehicle.attitude.yaw)],detected_obj_px,list(vehicle_ned_rel_home))
+            #obj_ned_rel_vehicle = [obj_ned_rel_home[0]-vehicle_ned_rel_home[0], obj_ned_rel_home[1]-vehicle_ned_rel_home[1], obj_ned_rel_home[2]-vehicle_ned_rel_home[2]]
             #now = datetime.datetime.now()
             #print(obj_ned_rel_home)
             #print('girdim')
             time.sleep(0.2)
             #print('Home location {}'.format())            
             print('Vehicle NED location is {} /n '.format(vehicle_ned_rel_home))
-            print('Object NED location is {} /n'.format(obj_ned_rel_home))
+            print('Object NED location is {} /n'.format(obj_ned_rel_vehicle))
             print('Guessed Obj Location is = {} north {} east /n'.format(obj_ned_rel_vehicle[0],obj_ned_rel_vehicle[1]))
             print('roll: {} pitch: {} yaw{} /n'.format(math.degrees(self.vehicle.attitude.roll),math.degrees(self.vehicle.attitude.pitch),math.degrees(self.vehicle.attitude.yaw)))
 
@@ -106,8 +106,8 @@ class Utility:
             #vehicle_ned_rel_home = geodetic_to_NED((vehicle_location.alt,vehicle_location.lon, vehicle_location.lat),(home_location.lat,home_location.lon, home_location.alt))
             #vehicle_ned_rel_home = geodetic_to_NED((vehicle_location.alt,vehicle_location.lon, vehicle_location.lat),(40,20,0))
             vehicle_ned_rel_home = geodetic_to_NED(self.home_location,vehicle_location)
-            obj_ned_rel_home = obj_NED_rel_home([math.degrees(self.vehicle.attitude.roll),math.degrees(self.vehicle.attitude.pitch),math.degrees(self.vehicle.attitude.yaw)],detected_obj_px,list(vehicle_ned_rel_home))
-            obj_ned_rel_vehicle = [obj_ned_rel_home[0]-vehicle_ned_rel_home[0], obj_ned_rel_home[1]-vehicle_ned_rel_home[1], obj_ned_rel_home[2]-vehicle_ned_rel_home[2]]
+            obj_ned_rel_vehicle = obj_NED_rel_vehicle([math.degrees(self.vehicle.attitude.roll),math.degrees(self.vehicle.attitude.pitch),math.degrees(self.vehicle.attitude.yaw)],detected_obj_px,list(vehicle_ned_rel_home))
+            #obj_ned_rel_vehicle = [obj_ned_rel_home[0]-vehicle_ned_rel_home[0], obj_ned_rel_home[1]-vehicle_ned_rel_home[1], obj_ned_rel_home[2]-vehicle_ned_rel_home[2]]
             return NED_to_lat_lon(vehicle_location, obj_ned_rel_vehicle[0],obj_ned_rel_vehicle[1])
 
     def get_obj_mean_lat_lon(self, detected_obj_px):
@@ -116,10 +116,10 @@ class Utility:
             while True:
                 time_start = time.time()
                 while (time.time() - time_start) < 0.2: 
-                    detected_obj_px = self.camera_bot.detect_x_y(self.boxes, self.scores, self.imW, self.imH)
-                    while detected_obj_px != None:
+                    detected_obj_px = self.camera_bot.detected_obj_px
+                    while np.all(detected_obj_px != None):
                         list_obj_lat_lon.append(self.obj_px_to_obj_lat_lon(detected_obj_px))
-                        detected_obj_px = self.camera_bot.detect_x_y(self.boxes, self.scores, self.imW, self.imH)
+                        detected_obj_px = self.camera_bot.detected_obj_px
                         time_start = time.time()    
                 break
             if len(list_obj_lat_lon) == 1:  # == 1 added 
@@ -147,13 +147,13 @@ class Utility:
             while True:
                 time_start = time.time()
                 while (time.time() - time_start) < 0.2:
-                    detected_obj_px = self.camera_bot.detect_x_y(self.boxes, self.scores, self.imW, self.imH)
-                    while (detected_obj_px != None):
+                    detected_obj_px = self.camera_bot.detected_obj_px
+                    while np.all(detected_obj_px != None):
                         #obj_mean_lat_lon = self.get_obj_mean_lat_lon(detected_obj_px)   # added 
                         dist_vehicle_obj = self.distance_fun(obj_mean_lat_lon,self.vehicle.location.global_frame)
                         if dist_vehicle_obj > 10:
                             list_obj_lat_lon.append(self.obj_px_to_obj_lat_lon(detected_obj_px))
-                            detected_obj_px = self.camera_bot.detect_x_y(self.boxes, self.scores, self.imW, self.imH)
+                            detected_obj_px = self.camera_bot.detected_obj_px
                             time_start = time.time()          
                 break
             if len(list_obj_lat_lon) == 1:
