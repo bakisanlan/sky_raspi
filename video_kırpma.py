@@ -1,37 +1,36 @@
 import cv2
 
-# Video dosyasının adı ve yolu
+# Video dosyasının adını belirtin
 video_path = 'merged_video.mp4'
 
-# Yeni video süresi (saniye cinsinden)
-new_duration = 240  # 4 dakika = 240 saniye
+# Videoyu açın
+cap = cv2.VideoCapture(video_path)
 
-# Videoyu aç
-video = cv2.VideoCapture(video_path)
+# Video özelliklerini alın
+fps = cap.get(cv2.CAP_PROP_FPS)
+total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-# Video özelliklerini al
-width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-fps = video.get(cv2.CAP_PROP_FPS)
-total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+# Kesilecek süreyi belirtin (örneğin, ilk 4 dakika)
+cut_duration = 4 * 60  # saniye cinsinden
 
-# Hedeflenen kare sayısı
-target_frames = int(fps * new_duration)
+# Kesilecek frame sayısını ve başlangıç frame'ini hesaplayın
+cut_frame_count = int(fps * cut_duration)
 
-# Yeni bir video dosyası oluştur
+# Yeni video dosyasını oluşturun
 output_path = 'trimmed_video.mp4'
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-output_video = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (int(cap.get(3)), int(cap.get(4))))
 
-# Belirli süreye kadar olan kırpılmış videoyu oluştur
-for i in range(target_frames):
-    ret, frame = video.read()
+# Videoyu kesip yeni dosyaya yazmaya başlayın
+frame_count = 0
+while frame_count < cut_frame_count:
+    ret, frame = cap.read()
     if not ret:
         break
-    output_video.write(frame)
+    out.write(frame)
+    frame_count += 1
 
-# Video dosyalarını kapat
-video.release()
-output_video.release()
+# Video dosyalarını kapatın
+cap.release()
+out.release()
 
-print("Video başarıyla kırpıldı.")
+print("Video başarıyla kırpıldı. Yeni video:", output_path)
