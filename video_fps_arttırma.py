@@ -1,34 +1,34 @@
 import cv2
 
 # Video dosyasını aç
-video_path = 'output_3.mp4'  # Videonun dosya yolu
+video_path = 'output_1.mp4'
 cap = cv2.VideoCapture(video_path)
 
 # Yeni FPS değerini ayarla
-desired_fps = 30
-output_path = 'output_video3.mp4'
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Video codec (başka codec kullanabilirsiniz)
-out = cv2.VideoWriter(output_path, fourcc, desired_fps, (int(cap.get(3)), int(cap.get(4))))
+desired_fps = 60
 
-# Çerçeve sayacı
-frame_count = 0
+# Video özelliklerini al
+width = int(cap.get(3))
+height = int(cap.get(4))
+
+# Yeni video dosyasını oluştur
+output_path = 'output_video01_60fps.mp4'
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter(output_path, fourcc, desired_fps, (width, height))
 
 while True:
-    # Her bir çerçeveyi al
     ret, frame = cap.read()
 
-    # Video sona erdiyse döngüden çık
     if not ret:
         break
 
-    # Belirli aralıklarla çerçeve kaydet
-    if frame_count % int(cap.get(cv2.CAP_PROP_FPS) / desired_fps) == 0:
-        out.write(frame)
+    # Yeni video dosyasına çerçeveyi yaz
+    out.write(frame)
 
-    frame_count += 1
+    # Orijinal videoyu göster
+    cv2.imshow('Original Video', frame)
 
-    # 'q' tuşuna basılınca döngüden çık
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == 27:  # ESC tuşuna basılınca döngüyü kır
         break
 
 # Kullanılan kaynakları serbest bırak
