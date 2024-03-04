@@ -100,7 +100,12 @@ class camera_class():
                 hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
                 mask = cv2.inRange(hsv, lower1, upper1)
 
-                _,contours, hier = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+                # if open cv is older vers
+                #_,contours, hier = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                # if open cv is newer vers
+                contours, hier = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
                 #print(contours)
 
                 if len(contours) != 0:

@@ -13,24 +13,24 @@ class DroneController:
 
     def take_off(self,altitude):
 
-        while self.is_armable is not True:
+        while self.vehicle.is_armable is not True:
             print(" Drone is not armable.")
             time.sleep(1)
 
         print("Drone is armable.")
 
-        self.mode = VehicleMode("GUIDED")
+        self.vehicle.mode = VehicleMode("GUIDED")
 
-        self.armed = True
+        self.vehicle.armed = True
 
-        while self.armed is not True:
+        while self.vehicle.armed is not True:
             print("Drone is arming.")
             time.sleep(1)
 
         print("Drone armed.")
-        self.simple_takeoff(altitude)
+        self.vehicle.simple_takeoff(altitude)
 
-        while self.location.global_relative_frame.alt >= altitude*0.9:
+        while self.vehicle.location.global_relative_frame.alt >= altitude*0.8:
             print("Drone is rising. ")
             time.sleep(1)
 
@@ -59,7 +59,7 @@ class DroneController:
         #print(self.cmds.list)
         acc_rad = 0
         target = [target.lat, target.lon, target.alt]
-        cmd_target = Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 10, acc_rad, 0, 0, *target)
+        cmd_target = Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, acc_rad, 0, 0, *target)
         self.cmds.add(cmd_target)
         #self.cmds.next = 1
         self.cmds.upload()
@@ -81,7 +81,9 @@ class DroneController:
             for cmd in self.def_mission:
                 self.cmds.add(cmd)
             self.cmds.upload()
-            time.sleep(0.2)
+           
+            time.sleep(0.5)
+            print("yüklenen görev command ",self.cmds.next)
             # for a in self.cmds:
             #     print(a)            
         else:
@@ -100,7 +102,7 @@ class DroneController:
             self.def_mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, 0, takeoff_alt))
 
             for waypoint in waypoints:
-                self.def_mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 10, 0, 0, 0, *waypoint))
+                self.def_mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0, *waypoint))
 
             # DO_JUMP
             self.def_mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_DO_JUMP, 0, 0, 2, -1, 0, 0, 0, 0, 0))
@@ -114,10 +116,13 @@ class DroneController:
 
     def land(self,target):
 
+        self.cmds.clear()
+        time.sleep(0.2)
         self.goto_auto(target)
         self.mode = VehicleMode("LAND")  
-        while not self.location.global_relative_frame.alt <= 0.1:
-            print(f"Altitude: {self.location.global_relative_frame.alt} meters")
+        time.sleep(0.1)
+        while not self.vehicle.location.global_relative_frame.alt <= 0.2:
+            print(f"Altitude: {self.vehicle.location.global_relative_frame.alt} meters")
             time.sleep(1)
         print("Drone has landed.")
         self.close()

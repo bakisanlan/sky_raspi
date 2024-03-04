@@ -20,7 +20,7 @@ from yaw_transformation import yaw_transformation
 from get_bearing import get_bearing
 from math import radians, sin, cos, sqrt,atan2
 from mission_drone import DroneController
-from util_drone import Utility
+from util import Utility
 import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -75,8 +75,7 @@ current_lon = vehicle.location.global_frame.lon
 
 home_location = vehicle.home_location
 if home_location == None:
-    home_location = LocationGlobalRelative(40.22948110, 29.00889869,100)
-  
+    home_location = (40.22948110, 29.00889869,100)
 #vehicle_location = vehicle.location.global_frame
 
 # if vehicle.mode == VehicleMode('AUTO'):
@@ -89,9 +88,30 @@ waypoints = [
     (40.23299848, 29.00748970, 40),
     (40.23112312, 29.00748970, 40)
 ]
+
+def mission_1():
+
+
+    mission = []
+
+    mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, 0, 0, 0, 0, 0, 0, 20))
+
+    ## circle command 
+    mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0,  40.23112312, 29.00887340, 40))
+    mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0, 40.23299848, 29.00887340, 40))
+    mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0, 40.23299848, 29.00748970, 40))
+    mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0, 40.23112312, 29.00748970, 40))
+
+
+    ## control loop
+    mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, 0, 0, 0, 0,  -35.36265574 ,149.16512720 ,40))
+
+    ##  infinite circuit
+    mission.append(Command(0, 0, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_DO_JUMP,0, 0, 1, -1, 0, 0, 0, 0, 0))
+
 takeoff_alt = 40
 missions.take_off(takeoff_alt)
-missions.add_default_mission(waypoints,takeoff_alt)
+mission_1()
 print('Auto mission is starting...')
 
 while vehicle.mode != VehicleMode("AUTO"):
@@ -183,44 +203,29 @@ while True:
                                 # while vehicle.mode != VehicleMode("AUTO"):
                                 #     vehicle.mode = VehicleMode("AUTO")
                                 #     time.sleep(0.5)
-                     
+                                
                                 print('Uploading default missions')
                                 missions.add_default_mission()
-                                vehicle.commands.wait_ready()
-
-                                if missions.cmds.next == 0:
-                                    print("melike")
-                                    missions.cmds.next = 5
-                                    vehicle.commands.upload()
-
                                 #missions.cmds.upload()
                                 #time.sleep(0.5)
-                                #prin
-                                #missions.cmds.next = 5
-                                # missions.cmds.next = 5
-                                # vehicle.commands.upload()
-                                print("2. 5 de geçti")
-                                #vehicle.mode = VehicleMode("GUIDED")
+                                missions.cmds.next = 5
+                                time.sleep(0.1)
                                 vehicle.mode = VehicleMode("AUTO")
+
+
                                 print('Going to waypoint 4 ...')
-                                #time.sleep(1)
 
                                 time_start = time.time()
                                 while (time.time() - time_start) < 2:  #!
                                     #detected_obj_px = [camera_bot.center_x, camera_bot.center_y]  
-                                    time.sleep(0.2)
-                                    print("while içindee")
                                     if np.all(camera_bot.detected_obj_px != None):
-                                        obj_mean_lat_lon_aft_wp = util.get_obj_mean_lat_lon(camera_bot.detected_obj_px)
+                                        obj_mean_lat_lon_aft_wp = util.get_obj_mean_lat_lon(camera_bot.detected_obj_px) 
                                         final_obj_mean_lat = (obj_mean_lat_lon_bef_wp[0] +obj_mean_lat_lon_aft_wp[0]) / 2
                                         final_obj_mean_lon = (obj_mean_lat_lon_bef_wp[1] +obj_mean_lat_lon_aft_wp[1]) / 2 
                                         final_obj_mean_lat_lon = (final_obj_mean_lat,final_obj_mean_lon)
 
-
                                         while True: #2
                                             dist_vehicle_obj = util.distance_fun(final_obj_mean_lat_lon,vehicle.location.global_frame)
-                                            print('deneme')
-                                            time.sleep(3)
                                             #print('Distance from fire: {} '.format(dist_vehicle_obj))
                                             if missions.cmds.next == 3:
 
