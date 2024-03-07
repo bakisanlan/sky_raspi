@@ -125,7 +125,7 @@ class Utility:
                     while np.all(detected_obj_px != None):
                         #obj_mean_lat_lon = self.get_obj_mean_lat_lon(detected_obj_px)   # added 
                         #dist_vehicle_obj = self.distance_fun(obj_mean_lat_lon,self.vehicle.location.global_frame)
-                        if self.vehicle.airspeed > 4:
+                        if self.vehicle.airspeed > 6:
                             list_obj_lat_lon.append(self.obj_px_to_obj_lat_lon(detected_obj_px))
                             detected_obj_px = self.camera_bot.detected_obj_px
                             time_start = time.time()     
@@ -165,7 +165,7 @@ class Utility:
                     while np.all(detected_obj_px != None):
                         #obj_mean_lat_lon = self.get_obj_mean_lat_lon(detected_obj_px)   # added 
                         dist_vehicle_obj = self.distance_fun(obj_mean_lat_lon,self.vehicle.location.global_frame)
-                        if self.vehicle.airspeed > 4:
+                        if self.vehicle.airspeed > 6:
                             list_obj_lat_lon.append(self.obj_px_to_obj_lat_lon(detected_obj_px))
                             detected_obj_px = self.camera_bot.detected_obj_px
                             time_start = time.time()     

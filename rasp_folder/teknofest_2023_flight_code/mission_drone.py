@@ -10,6 +10,7 @@ class DroneController:
         self.cmds = None
         self.def_mission = []
         self.count = 0
+        self.home_location = LocationGlobalRelative( 40.22910667, 29.00926226,40)
 
     def take_off(self,altitude):
 
@@ -48,8 +49,8 @@ class DroneController:
         #targetLocation = LocationGlobalRelative(target[0], target[1], target[2])
         #self.targetDistance = self.get_distance_metres(currentLocation, targetLocation)
         gotoFunction(target)
-
-
+    
+   
     def goto_auto(self, target):
         #print(self.cmds.list)
         # self.cmds.download()
@@ -114,17 +115,32 @@ class DroneController:
             print("Commands are uploading.")
             self.count = 1
 
-    def land(self,target):
+    def land(self):
 
-        self.cmds.clear()
-        time.sleep(0.2)
-        self.goto_auto(target)
-        self.mode = VehicleMode("LAND")  
-        time.sleep(0.1)
-        while not self.vehicle.location.global_relative_frame.alt <= 0.2:
-            print(f"Altitude: {self.vehicle.location.global_relative_frame.alt} meters")
+        
+        while True:
+
+            print("land in içinde")
             time.sleep(1)
-        print("Drone has landed.")
-        self.close()
-    
+            while self.get_distance_metres(self.vehicle.location.global_relative_frame , self.home_location) <=5:
+            
+                self.cmds.clear()
+                time.sleep(0.2)
+            
+                self.cmds.next = 0
+                self.vehicle.commands.upload()
+
+
+                        
+                while self.vehicle.mode != VehicleMode("LAND"):
+                    self.vehicle.mode = VehicleMode("LAND")
+                    time.sleep(0.5)
+                
+                time.sleep(0.1)
+                while not self.vehicle.location.global_relative_frame.alt <= 0.2:
+                    print(f"Altitude: {self.vehicle.location.global_relative_frame.alt} meters")
+                    time.sleep(1)
+                print("Drone has landed.")
+                self.vehicle.close()
+        
 

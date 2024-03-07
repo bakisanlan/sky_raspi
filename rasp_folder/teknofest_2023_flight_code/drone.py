@@ -75,7 +75,7 @@ current_lon = vehicle.location.global_frame.lon
 
 home_location = vehicle.home_location
 if home_location == None:
-    home_location = LocationGlobalRelative(40.22948110, 29.00889869,100)
+    home_location = LocationGlobalRelative( 40.22910667, 29.00926226,40)
   
 #vehicle_location = vehicle.location.global_frame
 
@@ -165,6 +165,7 @@ while True:
                         #detected_obj_px = [camera_bot.center_x, camera_bot.center_y]
                         obj_mean_lat_lon = (obj_mean_lat_lon_rel.lat, obj_mean_lat_lon_rel.lon)
                         dist_vehicle_obj_guess = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
+                        #obj_mean_lat_lon_global = LocationGlobalRelative(obj_mean_lat_lon_rel.lat, obj_mean_lat_lon_rel.lon,vehicle.location.global_relative_frame.alt)
                         #print(dist_vehicle_obj_guess)
                         #print(camera_bot.detected_obj_px)
 
@@ -188,10 +189,9 @@ while True:
                                 missions.add_default_mission()
                                 vehicle.commands.wait_ready()
 
-                                if missions.cmds.next == 0:
-                                    print("melike")
-                                    missions.cmds.next = 5
-                                    vehicle.commands.upload()
+                                
+                                missions.cmds.next = 5
+                                vehicle.commands.upload()
 
                                 #missions.cmds.upload()
                                 #time.sleep(0.5)
@@ -233,10 +233,12 @@ while True:
 
                                                 print('Directs to the object with auto goto second time.')
                                                 #missions.goto_auto(final_obj_mean_lat_lon)
-                                                missions.goto_auto(obj_mean_lat_lon_rel)
+                                                missions.goto_auto(final_obj_mean_lat_lon)
                                                 missions.cmds.next = 0
                                                 time.sleep(0.2)
                                                 vehicle.mode = VehicleMode("AUTO")
+
+                                                
 
                                                 time_start = time.time()
                                                 while True: #1
@@ -269,8 +271,17 @@ while True:
                                                         print("UAV is going to home location.")
                                                         #missions.cmds.clear()
                                                         #time.sleep(0.2)
-                                                        missions.land(home_location)
+
+                                                       
+                                                        missions.goto_auto(home_location)
                                                         missions.cmds.next = 0
+                                                        time.sleep(0.2)
+                                                        vehicle.mode = VehicleMode("AUTO")
+
+                                        
+                                                        missions.land()
+                                                        
+                                                        print("son bilmemene taskı durum:",missions.cmds.next)
                                                         time.sleep(0.2)
                                                         vehicle.close()
                                                         rospy.on_shutdown(camera_bot.gazeboCaminfo) # For closing gazebo cam 
