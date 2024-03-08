@@ -130,7 +130,6 @@ while True:
             while True: #4
                 
                 #detected_obj_px = [camera_bot.center_x, camera_bot.center_y]
-                #After the object is detected, continue until the distance is greater than 50 meters.
                 dist_vehicle_obj = util.distance_fun(obj_mean_lat_lon,vehicle.location.global_frame)
                 #print('Distance from fire: {}'.format(dist_vehicle_obj)) 
                 #util.print_now()
@@ -146,7 +145,7 @@ while True:
                     #     vehicle.mode = VehicleMode("GUIDED")
                     #     time.sleep(0.5)
                 
-                    print(vehicle.mode)
+                    # print(vehicle.mode)
             
                     obj_mean_lat_lon_rel = LocationGlobalRelative(obj_mean_lat_lon[0],obj_mean_lat_lon[1],vehicle.location.global_relative_frame.alt)
                     
@@ -174,6 +173,7 @@ while True:
 
                             #When you are 10 meters away from the object, go back to the old auto mission and take the average.
                             ## !!!!
+                            #Check whether the object within boundaries
                             obj_mean_lat_lon_bef_wp = util.get_obj_mean_lat_lon_wp(camera_bot.detected_obj_px,obj_mean_lat_lon) 
                             if (obj_mean_lat_lon_bef_wp[0] < max_lat) and (obj_mean_lat_lon_bef_wp[0] > min_lat) and (obj_mean_lat_lon_bef_wp[1] < max_lon) and (obj_mean_lat_lon_bef_wp[1] > min_lon):
 
@@ -184,7 +184,8 @@ while True:
                                 # while vehicle.mode != VehicleMode("AUTO"):
                                 #     vehicle.mode = VehicleMode("AUTO")
                                 #     time.sleep(0.5)
-                     
+
+                                # Going back to waypoint 4
                                 print('Uploading default missions')
                                 missions.add_default_mission()
                                 vehicle.commands.wait_ready()
@@ -199,7 +200,7 @@ while True:
                                 #missions.cmds.next = 5
                                 # missions.cmds.next = 5
                                 # vehicle.commands.upload()
-                                print("2. 5 de geçti")
+                                # print("2. 5 de geçti")
                                 #vehicle.mode = VehicleMode("GUIDED")
                                 vehicle.mode = VehicleMode("AUTO")
                                 print('Going to waypoint 4 ...')
@@ -209,7 +210,7 @@ while True:
                                 while (time.time() - time_start) < 2:  #!
                                     #detected_obj_px = [camera_bot.center_x, camera_bot.center_y]  
                                     time.sleep(0.2)
-                                    print("while içindee")
+                                    # print("while içindee")
                                     if np.all(camera_bot.detected_obj_px != None):
                                         obj_mean_lat_lon_aft_wp = util.get_obj_mean_lat_lon(camera_bot.detected_obj_px)
                                         final_obj_mean_lat = (obj_mean_lat_lon_bef_wp[0] +obj_mean_lat_lon_aft_wp[0]) / 2
@@ -219,12 +220,12 @@ while True:
 
                                         while True: #2
                                             dist_vehicle_obj = util.distance_fun(final_obj_mean_lat_lon,vehicle.location.global_frame)
-                                            print('deneme')
+                                            # print('deneme')
                                             time.sleep(3)
                                             #print('Distance from fire: {} '.format(dist_vehicle_obj))
                                             if missions.cmds.next == 3:
 
-                                                print('nexxt 3 oldu')
+                                                # print('nexxt 3 oldu')
                                                 
                                                 final_obj_mean_lat_lon = LocationGlobalRelative(final_obj_mean_lat_lon[0],final_obj_mean_lat_lon[1],vehicle.location.global_relative_frame.alt)
                                                 # while vehicle.mode != VehicleMode("GUIDED"):
@@ -272,7 +273,7 @@ while True:
                                                         #missions.cmds.clear()
                                                         #time.sleep(0.2)
 
-                                                       
+                                                       # After dropping bombs going back to home location to land
                                                         missions.goto_auto(home_location)
                                                         missions.cmds.next = 0
                                                         time.sleep(0.2)
@@ -281,7 +282,7 @@ while True:
                                         
                                                         missions.land()
                                                         
-                                                        print("son bilmemene taskı durum:",missions.cmds.next)
+                                                        # print("son bilmemene taskı durum:",missions.cmds.next)
                                                         time.sleep(0.2)
                                                         vehicle.close()
                                                         rospy.on_shutdown(camera_bot.gazeboCaminfo) # For closing gazebo cam 
