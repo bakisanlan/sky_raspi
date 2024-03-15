@@ -1,0 +1,19 @@
+15.03.2024 GÖREV
+----------------
+
+ARAYÜZ
+----------------
+map eklecek
+arka plana sky ile ilgili foto konulcak
+mission status eklencek
+roll pitch yaw
+ucusun simülasyon ortamındaki görüntüsünü koyabilir miyiz, unity, flighgear, unreal engine, xplane
+
+
+YAPAY ZEKA EĞİTİMİ
+------------------
+20 metre yükseklite, 2x2 ateş görüntüsü temel seneryo
+20-30-40-50-60 metre yükseklikler, 0-15-30-45-60 roll/pitch, 
+farklı gidiş yönleri, ateşin uçağa göre farklı konumları, en az 10 tane farklı ateş
+seneryolarında video üretilip eğitilecek.
+
